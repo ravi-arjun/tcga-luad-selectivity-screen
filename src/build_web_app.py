@@ -1,0 +1,492 @@
+import os
+import json
+import pandas as pd
+
+
+def pdbqt_to_pdb_block(pdbqt_path, first_model_only=True):
+    """Converts a receptor or docked ligand PDBQT file into a clean PDB text block for 3Dmol.js."""
+    if not os.path.exists(pdbqt_path):
+        return ""
+    lines = []
+    with open(pdbqt_path, "r") as f:
+        for line in f:
+            if first_model_only and line.startswith("ENDMDL"):
+                break
+            if line.startswith(("ATOM", "HETATM")):
+                # Strip PDBQT partial charge & AD4 atom type columns (keep standard 1-66 PDB columns)
+                elem = line[77:79].strip()
+                if elem in {"NA", "OA", "SA", "HD"}:
+                    elem = elem[0]
+                pdb_line = f"{line[:66]:<66}          {elem:>2}\n"
+                lines.append(pdb_line)
+    lines.append("END\n")
+    return "".join(lines)
+
+
+def build_static_site(out_dir="docs"):
+    os.makedirs(out_dir, exist_ok=True)
+
+    # 1. Load all pipeline JSON & CSV outputs
+    with open("results/LUAD_km_curves_web.json", "r") as f:
+        km_data = json.load(f)
+
+    with open("results/LUAD_web_dashboard_bundle.json", "r") as f:
+        docking_bundle = json.load(f)
+
+    foldseek_df = pd.read_csv("results/LUAD_foldseek_offtargets.csv")
+    pockets = json.load(open("results/LUAD_docking_pockets.json", "r"))
+
+    # 2. Bundle 3D receptor & top docked pose structures directly into JSON for zero-CORS static hosting
+    structures_3d = {
+        "NEK2_receptor": pdbqt_to_pdb_block("docking/receptors/NEK2_primary.pdbqt"),
+        "PLK1_receptor": pdbqt_to_pdb_block("docking/receptors/PLK1_primary.pdbqt"),
+        "poses": {},
+    }
+
+    for row in docking_bundle["docking_results"]:
+        key = f"{row['primary_target']}_{row['ligand']}"
+        structures_3d["poses"][key] = pdbqt_to_pdb_block(row["pose_file"], first_model_only=True)
+
+    site_payload = {
+        "km_curves": km_data,
+        "docking_results": docking_bundle["docking_results"],
+        "pocket_contacts": docking_bundle["pocket_contacts"],
+        "foldseek_offtargets": foldseek_df.to_dict(orient="records"),
+        "pockets": pockets,
+        "structures_3d": structures_3d,
+    }
+
+    with open(os.path.join(out_dir, "pipeline_data.json"), "w") as jf:
+        json.dump(site_payload, jf)
+
+    # 3. Write complete interactive HTML/CSS/JS dashboard (Plotly.js + 3Dmol.js)
+    html_code = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TCGA-LUAD Paralog-Selective Drug Discovery Pipeline</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.5.5/3Dmol-min.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --nek2: #f97316;
+      --plk1: #a855f7;
+      --green: #22c55e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 2rem 1.5rem;
+    }
+    .container { max-width: 1240px; margin: 0 auto; padding: 0 1.25rem; }
+    .badge {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 0.6rem;
+    }
+    h1 { margin: 0 0 0.5rem; font-size: 1.85rem; }
+    .subtitle { color: var(--muted); max-width: 860px; margin: 0 0 1.2rem; font-size: 0.98rem; }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 0.9rem;
+      margin-top: 1rem;
+    }
+    .metric-card {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+    }
+    .metric-val { font-size: 1.35rem; font-weight: 700; color: var(--accent); }
+    .metric-lbl { font-size: 0.8rem; color: var(--muted); }
+    .section { margin: 2rem auto; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .card h2 { margin-top: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+    .controls { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; align-items: center; }
+    select, button {
+      background: #0f172a;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    button.active, button:hover { border-color: var(--accent); color: var(--accent); }
+    #viewer3d {
+      width: 100%;
+      height: 440px;
+      position: relative;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #090d16;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--border); text-align: left; }
+    th { color: var(--muted); font-weight: 600; }
+    .pill-sel {
+      background: rgba(34, 197, 94, 0.16);
+      color: var(--green);
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    .pill-non {
+      background: rgba(239, 68, 68, 0.16);
+      color: #f87171;
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+    }
+    .contact-chip {
+      display: inline-block;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.25rem 0.55rem;
+      margin: 0.2rem;
+      font-size: 0.82rem;
+    }
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="badge">Computational Oncology &amp; Structural Drug Discovery</div>
+      <h1>Paralog-Selective Target &amp; Ligand Discovery in Lung Adenocarcinoma (TCGA-LUAD)</h1>
+      <p class="subtitle">
+        End-to-end multi-omics &amp; structure-based counter-screening pipeline integrating <strong>PyDESeq2</strong> differential expression,
+        <strong>Kaplan–Meier / Cox</strong> survival stratification, <strong>STRING</strong> network centrality, <strong>Foldseek</strong> 3D proteome paralog mapping,
+        and <strong>AutoDock Vina (&Delta;&Delta;G)</strong> off-target selectivity screening.
+      </p>
+      <div class="metrics-grid">
+        <div class="metric-card"><div class="metric-val">42 Drivers</div><div class="metric-lbl">Prognostic LUAD Genes (FDR &lt; 0.01, Cox p &lt; 0.05)</div></div>
+        <div class="metric-card"><div class="metric-val">NEK2 &amp; PLK1</div><div class="metric-lbl">Top Druggable Mitotic Kinase Hubs</div></div>
+        <div class="metric-card"><div class="metric-val">6 Paralogs</div><div class="metric-lbl">Foldseek 3D Structural Off-Targets Counter-Screened</div></div>
+        <div class="metric-card"><div class="metric-val">-1.90 kcal/mol</div><div class="metric-lbl">Peak Selectivity Margin (&Delta;&Delta;G, Alisertib on PLK1)</div></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container section">
+    <!-- SECTION 1: INTERACTIVE 3D DOCKING VIEWER & POCKET CONTACTS -->
+    <div class="card">
+      <h2>1. Interactive 3D ATP-Pocket Docking &amp; Selectivity Viewer (AutoDock Vina 1.2.7)</h2>
+      <div class="controls">
+        <label>Primary Target:
+          <select id="targetSelect">
+            <option value="PLK1">PLK1 (PDB: 2OWB)</option>
+            <option value="NEK2">NEK2 (PDB: 2W5B)</option>
+          </select>
+        </label>
+        <label>Candidate Ligand:
+          <select id="ligandSelect"></select>
+        </label>
+        <button id="spinBtn">Toggle Spin</button>
+        <button id="resetCamBtn">Focus ATP Pocket</button>
+      </div>
+      <div class="grid-2">
+        <div>
+          <div id="viewer3d"></div>
+        </div>
+        <div>
+          <div id="ligandStatsCard" style="margin-bottom: 1rem;"></div>
+          <h3 style="font-size: 1rem; margin-bottom: 0.4rem;">Catalytic Pocket Contacts (&lt; 3.8 &Aring;)</h3>
+          <div id="contactsContainer"></div>
+          <h3 style="font-size: 1rem; margin: 1rem 0 0.4rem;">Foldseek Structural Off-Target Paralogs</h3>
+          <table id="offtargetTable">
+            <thead><tr><th>Off-Target</th><th>UniProt</th><th>Foldseek E-val</th><th>Seq ID</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: SELECTIVITY QUADRANT & KAPLAN-MEIER SURVIVAL -->
+    <div class="grid-2">
+      <div class="card">
+        <h2>2. Potency (&Delta;G) vs. Paralog Selectivity (&Delta;&Delta;G)</h2>
+        <div id="selectivityPlot" style="height: 390px;"></div>
+      </div>
+      <div class="card">
+        <h2>3. TCGA-LUAD Overall Survival (Kaplan–Meier)</h2>
+        <div class="controls" id="kmGeneButtons"></div>
+        <div id="kmPlot" style="height: 345px;"></div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: FULL COUNTER-SCREENING TABLE -->
+    <div class="card">
+      <h2>4. Complete Off-Target Counter-Screening &amp; ADME Matrix (80 Docking Runs)</h2>
+      <div style="overflow-x: auto;">
+        <table id="fullScreenTable">
+          <thead>
+            <tr>
+              <th>Target</th>
+              <th>Ligand</th>
+              <th>&Delta;G Primary (kcal/mol)</th>
+              <th>Closest Off-Target</th>
+              <th>&Delta;G Off-Target</th>
+              <th>Selectivity &Delta;&Delta;G</th>
+              <th>MW</th>
+              <th>cLogP</th>
+              <th>TPSA (&Aring;&sup2;)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    Developed by Arjun Ravi &bull; Department of Biotechnology, Anna University &bull; Data: TCGA-LUAD, STRING v12, AlphaFold DB, Foldseek, RCSB PDB
+  </footer>
+
+  <script>
+    let DATA = null;
+    let glviewer = null;
+    let spinning = false;
+
+    async function init() {
+      const resp = await fetch("pipeline_data.json");
+      DATA = await resp.json();
+
+      // Populate ligand dropdown
+      const ligSel = document.getElementById("ligandSelect");
+      const uniqueLigs = [...new Set(DATA.docking_results.map(r => r.ligand))];
+      uniqueLigs.forEach(l => {
+        const opt = document.createElement("option");
+        opt.value = l;
+        opt.textContent = l;
+        ligSel.appendChild(opt);
+      });
+      ligSel.value = "Alisertib";
+
+      // Initialize 3Dmol viewer
+      glviewer = $3Dmol.createViewer("viewer3d", { backgroundColor: "#090d16" });
+
+      document.getElementById("targetSelect").addEventListener("change", () => {
+        const tgt = document.getElementById("targetSelect").value;
+        document.getElementById("ligandSelect").value = tgt === "PLK1" ? "Alisertib" : "BI-2536";
+        update3DView();
+      });
+      ligSel.addEventListener("change", update3DView);
+      document.getElementById("spinBtn").addEventListener("click", () => {
+        spinning = !spinning;
+        glviewer.spin(spinning ? "y" : false, 0.6);
+      });
+      document.getElementById("resetCamBtn").addEventListener("click", () => {
+        glviewer.zoomTo({ hetflag: true }, 600);
+      });
+
+      update3DView();
+      renderSelectivityQuadrant();
+      initKMExplorer();
+      renderFullTable();
+    }
+
+    function update3DView() {
+      const tgt = document.getElementById("targetSelect").value;
+      const lig = document.getElementById("ligandSelect").value;
+      const recPDB = DATA.structures_3d[`${tgt}_receptor`];
+      const posePDB = DATA.structures_3d.poses[`${tgt}_${lig}`];
+
+      glviewer.clear();
+      glviewer.addModel(recPDB, "pdb");
+      glviewer.setStyle({ model: 0 }, { cartoon: { color: tgt === "PLK1" ? "#a855f7" : "#f97316", opacity: 0.85 } });
+
+      if (posePDB) {
+        glviewer.addModel(posePDB, "pdb");
+        glviewer.setStyle({ model: 1 }, { stick: { colorscheme: "greenCarbon", radius: 0.24 } });
+        // Highlight pocket residues within 4.5 A of docked ligand
+        glviewer.setStyle(
+          { model: 0, within: { distance: 4.5, sel: { model: 1 } } },
+          { cartoon: { color: "#38bdf8" }, stick: { colorscheme: "whiteCarbon", radius: 0.12 } }
+        );
+      }
+
+      glviewer.zoomTo({ model: 1 });
+      glviewer.zoom(0.75);
+      glviewer.render();
+
+      // Update ligand stats & contacts
+      const row = DATA.docking_results.find(r => r.primary_target === tgt && r.ligand === lig);
+      const isSel = row.ddG_selectivity <= -0.5;
+      document.getElementById("ligandStatsCard").innerHTML = `
+        <div style="background:#0f172a; padding:0.85rem; border-radius:8px; border:1px solid #334155;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="font-size:1.05rem;">${lig} &rarr; ${tgt}</strong>
+            <span class="${isSel ? 'pill-sel' : 'pill-non'}">&Delta;&Delta;G = ${row.ddG_selectivity > 0 ? '+' : ''}${row.ddG_selectivity.toFixed(2)} kcal/mol</span>
+          </div>
+          <p style="margin:0.5rem 0 0; font-size:0.88rem; color:#cbd5e1;">
+            Primary Affinity: <strong>${row.dG_primary_kcal.toFixed(2)} kcal/mol</strong> &bull;
+            Closest Paralog (${row.closest_offtarget}): <strong>${row.dG_closest_offtarget.toFixed(2)} kcal/mol</strong><br/>
+            MW: ${row.MW} Da &bull; cLogP: ${row.cLogP} &bull; TPSA: ${row.TPSA} &Aring;&sup2;
+          </p>
+        </div>
+      `;
+
+      const contacts = DATA.pocket_contacts[`${tgt}_${lig}`] || [];
+      const cDiv = document.getElementById("contactsContainer");
+      cDiv.innerHTML = contacts.length
+        ? contacts.slice(0, 10).map(c => `<span class="contact-chip">${c.residue} (${c.min_dist_A}&Aring;)</span>`).join("")
+        : `<span style="color:#94a3b8; font-size:0.85rem;">Rotate &amp; zoom the 3D pocket viewer to inspect steric fit.</span>`;
+
+      const offRows = DATA.foldseek_offtargets.filter(o => o.primary_target === tgt).slice(0, 3);
+      document.querySelector("#offtargetTable tbody").innerHTML = offRows.map(o => `
+        <tr>
+          <td><strong>${o.offtarget_symbol}</strong></td>
+          <td>${o.offtarget_uniprot}</td>
+          <td>${Number(o.evalue).toExponential(2)}</td>
+          <td>${o.seq_id}%</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderSelectivityQuadrant() {
+      const traces = ["NEK2", "PLK1"].map(tgt => {
+        const sub = DATA.docking_results.filter(r => r.primary_target === tgt);
+        return {
+          x: sub.map(r => r.dG_primary_kcal),
+          y: sub.map(r => r.ddG_selectivity),
+          text: sub.map(r => r.ligand),
+          mode: "markers+text",
+          textposition: "top center",
+          name: `${tgt} Target`,
+          marker: { size: 11, color: tgt === "PLK1" ? "#a855f7" : "#f97316", line: { width: 1, color: "#fff" } },
+          hovertemplate: "<b>%{text}</b> (" + tgt + ")<br>&Delta;G: %{x:.2f} kcal/mol<br>&Delta;&Delta;G: %{y:.2f} kcal/mol<extra></extra>"
+        };
+      });
+
+      Plotly.newPlot("selectivityPlot", traces, {
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "#0f172a",
+        font: { color: "#e2e8f0" },
+        margin: { t: 20, r: 20, b: 48, l: 55 },
+        xaxis: { title: "Primary Affinity &Delta;G (kcal/mol)", gridcolor: "#1e293b" },
+        yaxis: { title: "Selectivity Margin &Delta;&Delta;G (kcal/mol)", gridcolor: "#1e293b" },
+        shapes: [
+          { type: "line", x0: -10.5, x1: -7, y0: -0.5, y1: -0.5, line: { color: "#22c55e", dash: "dash", width: 1.5 } },
+          { type: "line", x0: -8.5, x1: -8.5, y0: -2.1, y1: 0.7, line: { color: "#38bdf8", dash: "dot", width: 1.5 } }
+        ]
+      }, { responsive: true });
+    }
+
+    function initKMExplorer() {
+      const genes = Object.keys(DATA.km_curves);
+      const btnBox = document.getElementById("kmGeneButtons");
+      genes.forEach((g, i) => {
+        const b = document.createElement("button");
+        b.textContent = g;
+        if (i === 0) b.classList.add("active");
+        b.onclick = () => {
+          document.querySelectorAll("#kmGeneButtons button").forEach(x => x.classList.remove("active"));
+          b.classList.add("active");
+          plotKM(g);
+        };
+        btnBox.appendChild(b);
+      });
+      plotKM(genes[0]);
+    }
+
+    function plotKM(symbol) {
+      const g = DATA.km_curves[symbol];
+      Plotly.newPlot("kmPlot", [
+        {
+          x: g.high.timeline_months,
+          y: g.high.survival_prob,
+          mode: "lines",
+          line: { shape: "hv", color: "#ef4444", width: 2.5 },
+          name: `High ${symbol} (n=${g.high.n})`
+        },
+        {
+          x: g.low.timeline_months,
+          y: g.low.survival_prob,
+          mode: "lines",
+          line: { shape: "hv", color: "#38bdf8", width: 2.5 },
+          name: `Low ${symbol} (n=${g.low.n})`
+        }
+      ], {
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "#0f172a",
+        font: { color: "#e2e8f0" },
+        title: { text: `${symbol} Overall Survival (Log-Rank p = ${g.logrank_p})`, font: { size: 13 } },
+        margin: { t: 40, r: 20, b: 45, l: 50 },
+        xaxis: { title: "Months", gridcolor: "#1e293b" },
+        yaxis: { title: "Survival Probability", range: [0, 1.05], gridcolor: "#1e293b" },
+        legend: { x: 0.03, y: 0.1 }
+      }, { responsive: true });
+    }
+
+    function renderFullTable() {
+      const tbody = document.querySelector("#fullScreenTable tbody");
+      tbody.innerHTML = DATA.docking_results.map(r => {
+        const isSel = r.ddG_selectivity <= -0.5;
+        return `
+          <tr>
+            <td><strong>${r.primary_target}</strong></td>
+            <td>${r.ligand}</td>
+            <td>${r.dG_primary_kcal.toFixed(2)}</td>
+            <td>${r.closest_offtarget}</td>
+            <td>${r.dG_closest_offtarget.toFixed(2)}</td>
+            <td><span class="${isSel ? 'pill-sel' : 'pill-non'}">${r.ddG_selectivity > 0 ? '+' : ''}${r.ddG_selectivity.toFixed(2)}</span></td>
+            <td>${r.MW}</td>
+            <td>${r.cLogP}</td>
+            <td>${r.TPSA}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    init();
+  </script>
+</body>
+</html>
+"""
+    with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as hf:
+        hf.write(html_code)
+
+    print(f"[SUCCESS] Static web dashboard built in '{out_dir}/' (index.html + pipeline_data.json)")
+
+
+if __name__ == "__main__":
+    build_static_site()

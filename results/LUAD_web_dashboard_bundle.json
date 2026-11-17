@@ -1,0 +1,664 @@
+{
+  "docking_results": [
+    {
+      "primary_target": "NEK2",
+      "ligand": "BI-2536",
+      "dG_primary_kcal": -9.189,
+      "closest_offtarget": "NEK7",
+      "dG_closest_offtarget": -8.336,
+      "ddG_selectivity": -0.853,
+      "MW": 521.67,
+      "cLogP": 3.56,
+      "TPSA": 102.93,
+      "pose_file": "docking/poses/NEK2_BI-2536_pose.pdbqt",
+      "dG_NEK4": -8.186,
+      "dG_NEK8": -7.766,
+      "dG_NEK7": -8.336,
+      "dG_RPS6KB1": NaN,
+      "dG_MARK2": NaN,
+      "dG_PHKG2": NaN
+    },
+    {
+      "primary_target": "NEK2",
+      "ligand": "Dasatinib",
+      "dG_primary_kcal": -9.38,
+      "closest_offtarget": "NEK7",
+      "dG_closest_offtarget": -8.716,
+      "ddG_selectivity": -0.664,
+      "MW": 488.02,
+      "cLogP": 3.31,
+      "TPSA": 106.51,
+      "pose_file": "docking/poses/NEK2_Dasatinib_pose.pdbqt",
+      "dG_NEK4": -8.294,
+      "dG_NEK8": -8.058,
+      "dG_NEK7": -8.716,
+      "dG_RPS6KB1": NaN,
+      "dG_MARK2": NaN,
+      "dG_PHKG2": NaN
+    },
+    {
+      "primary_target": "NEK2",
+      "ligand": "Volasertib",
+      "dG_primary_kcal": -8.066,
+      "closest_offtarget": "NEK8",
+      "dG_closest_offtarget": -7.49,
+      "ddG_selectivity": -0.576,
+      "MW": 620.84,
+      "cLogP": 4.51,
+      "TPSA": 106.17,
+      "pose_file": "docking/poses/NEK2_Volasertib_pose.pdbqt",
+      "dG_NEK4": -5.928,
+      "dG_NEK8": -7.49,
+      "dG_NEK7": -6.799,
+      "dG_RPS6KB1": NaN,
+      "dG_MARK2": NaN,
+      "dG_PHKG2": NaN
+    },
+    {
+      "primary_target": "NEK2",
+      "ligand": "Sunitinib",
+      "dG_primary_kcal": -8.418,
+      "closest_offtarget": "NEK4",
+      "dG_closest_offtarget": -7.942,
+      "ddG_selectivity": -0.476,
+      "MW": 398.48,
+      "cLogP": 3.33,
+      "TPSA": 77.23,
+      "pose_file": "docking/poses/NEK2_Sunitinib_pose.pdbqt",
+      "dG_NEK4": -7.942,
+      "dG_NEK8": -7.15,
+      "dG_NEK7": -7.874,
+      "dG_RPS6KB1": NaN,
+      "dG_MARK2": NaN,
+      "dG_PHKG2": NaN
+    },
+    {
+      "primary_target": "NEK2",
+      "ligand": "Hesperadin",
+      "dG_primary_kcal": -8.733,
+      "closest_offtarget": "NEK7",
+      "dG_closest_offtarget": -8.531,
+      "ddG_selectivity": -0.202,
+      "MW": 558.7,
+      "cLogP": 3.97,
+      "TPSA": 98.82,
+      "pose_file": "docking/poses/NEK2_Hesperadin_pose.pdbqt",
+      "dG_NEK4": -7.855,
+      "dG_NEK8": -7.888,
+      "dG_NEK7": -8.531,
+      "dG_RPS6KB1": NaN,
+      "dG_MARK2": NaN,
+      "dG_PHKG2": NaN
+    },
+    {
+      "primary_target": "NEK2",
+      "ligand": "Tofacitinib",
+      "dG_primary_kcal": -7.457,
+      "closest_offtarget": "NEK4",
+      "dG_closest_offtarget": -7.255,
+      "ddG_selectivity": -0.202,
+      "MW": 312.38,
+      "cLogP": 1.54,
+      "TPSA": 88.91,
+      "pose_file": "docking/poses/NEK2_Tofacitinib_pose.pdbqt",
+      "dG_NEK4": -7.255,
+      "dG_NEK8": -6.775,
+      "dG_NEK7": -6.786,
+      "dG_RPS6KB1": NaN,
+      "dG_MARK2": NaN,
+      "dG_PHKG2": NaN
+    },
+    {
+      "primary_target": "NEK2",
+      "ligand": "Rigosertib",
+      "dG_primary_kcal": -7.155,
+      "closest_offtarget": "NEK4",
+      "dG_closest_offtarget": -7.212,
+      "ddG_selectivity": 0.057,
+      "MW": 451.5,
+      "cLogP": 2.8,
+      "TPSA": 120.39,
+      "pose_file": "docking/poses/NEK2_Rigosertib_pose.pdbqt",
+      "dG_NEK4": -7.212,
+      "dG_NEK8": -6.805,
+      "dG_NEK7": -7.039,
+      "dG_RPS6KB1": NaN,
+      "dG_MARK2": NaN,
+      "dG_PHKG2": NaN
+    },
+    {
+      "primary_target": "NEK2",
+      "ligand": "Barasertib",
+      "dG_primary_kcal": -7.195,
+      "closest_offtarget": "NEK7",
+      "dG_closest_offtarget": -7.402,
+      "ddG_selectivity": 0.207,
+      "MW": 565.72,
+      "cLogP": 3.04,
+      "TPSA": 115.32,
+      "pose_file": "docking/poses/NEK2_Barasertib_pose.pdbqt",
+      "dG_NEK4": -7.218,
+      "dG_NEK8": -6.982,
+      "dG_NEK7": -7.402,
+      "dG_RPS6KB1": NaN,
+      "dG_MARK2": NaN,
+      "dG_PHKG2": NaN
+    },
+    {
+      "primary_target": "NEK2",
+      "ligand": "Erlotinib",
+      "dG_primary_kcal": -7.454,
+      "closest_offtarget": "NEK4",
+      "dG_closest_offtarget": -7.686,
+      "ddG_selectivity": 0.232,
+      "MW": 393.44,
+      "cLogP": 3.41,
+      "TPSA": 74.73,
+      "pose_file": "docking/poses/NEK2_Erlotinib_pose.pdbqt",
+      "dG_NEK4": -7.686,
+      "dG_NEK8": -6.452,
+      "dG_NEK7": -6.589,
+      "dG_RPS6KB1": NaN,
+      "dG_MARK2": NaN,
+      "dG_PHKG2": NaN
+    },
+    {
+      "primary_target": "NEK2",
+      "ligand": "Alisertib",
+      "dG_primary_kcal": -8.766,
+      "closest_offtarget": "NEK7",
+      "dG_closest_offtarget": -9.295,
+      "ddG_selectivity": 0.529,
+      "MW": 518.93,
+      "cLogP": 5.75,
+      "TPSA": 105.93,
+      "pose_file": "docking/poses/NEK2_Alisertib_pose.pdbqt",
+      "dG_NEK4": -8.604,
+      "dG_NEK8": -8.769,
+      "dG_NEK7": -9.295,
+      "dG_RPS6KB1": NaN,
+      "dG_MARK2": NaN,
+      "dG_PHKG2": NaN
+    },
+    {
+      "primary_target": "PLK1",
+      "ligand": "Alisertib",
+      "dG_primary_kcal": -10.09,
+      "closest_offtarget": "RPS6KB1",
+      "dG_closest_offtarget": -8.192,
+      "ddG_selectivity": -1.898,
+      "MW": 518.93,
+      "cLogP": 5.75,
+      "TPSA": 105.93,
+      "pose_file": "docking/poses/PLK1_Alisertib_pose.pdbqt",
+      "dG_NEK4": NaN,
+      "dG_NEK8": NaN,
+      "dG_NEK7": NaN,
+      "dG_RPS6KB1": -8.192,
+      "dG_MARK2": -5.83,
+      "dG_PHKG2": -7.724
+    },
+    {
+      "primary_target": "PLK1",
+      "ligand": "Hesperadin",
+      "dG_primary_kcal": -9.029,
+      "closest_offtarget": "RPS6KB1",
+      "dG_closest_offtarget": -7.94,
+      "ddG_selectivity": -1.089,
+      "MW": 558.7,
+      "cLogP": 3.97,
+      "TPSA": 98.82,
+      "pose_file": "docking/poses/PLK1_Hesperadin_pose.pdbqt",
+      "dG_NEK4": NaN,
+      "dG_NEK8": NaN,
+      "dG_NEK7": NaN,
+      "dG_RPS6KB1": -7.94,
+      "dG_MARK2": -4.904,
+      "dG_PHKG2": -7.215
+    },
+    {
+      "primary_target": "PLK1",
+      "ligand": "BI-2536",
+      "dG_primary_kcal": -9.209,
+      "closest_offtarget": "RPS6KB1",
+      "dG_closest_offtarget": -8.141,
+      "ddG_selectivity": -1.068,
+      "MW": 521.67,
+      "cLogP": 3.56,
+      "TPSA": 102.93,
+      "pose_file": "docking/poses/PLK1_BI-2536_pose.pdbqt",
+      "dG_NEK4": NaN,
+      "dG_NEK8": NaN,
+      "dG_NEK7": NaN,
+      "dG_RPS6KB1": -8.141,
+      "dG_MARK2": -5.382,
+      "dG_PHKG2": -7.202
+    },
+    {
+      "primary_target": "PLK1",
+      "ligand": "Rigosertib",
+      "dG_primary_kcal": -7.806,
+      "closest_offtarget": "PHKG2",
+      "dG_closest_offtarget": -7.089,
+      "ddG_selectivity": -0.717,
+      "MW": 451.5,
+      "cLogP": 2.8,
+      "TPSA": 120.39,
+      "pose_file": "docking/poses/PLK1_Rigosertib_pose.pdbqt",
+      "dG_NEK4": NaN,
+      "dG_NEK8": NaN,
+      "dG_NEK7": NaN,
+      "dG_RPS6KB1": -6.238,
+      "dG_MARK2": -6.292,
+      "dG_PHKG2": -7.089
+    },
+    {
+      "primary_target": "PLK1",
+      "ligand": "Barasertib",
+      "dG_primary_kcal": -8.031,
+      "closest_offtarget": "PHKG2",
+      "dG_closest_offtarget": -7.397,
+      "ddG_selectivity": -0.634,
+      "MW": 565.72,
+      "cLogP": 3.04,
+      "TPSA": 115.32,
+      "pose_file": "docking/poses/PLK1_Barasertib_pose.pdbqt",
+      "dG_NEK4": NaN,
+      "dG_NEK8": NaN,
+      "dG_NEK7": NaN,
+      "dG_RPS6KB1": -7.196,
+      "dG_MARK2": -5.234,
+      "dG_PHKG2": -7.397
+    },
+    {
+      "primary_target": "PLK1",
+      "ligand": "Sunitinib",
+      "dG_primary_kcal": -8.726,
+      "closest_offtarget": "PHKG2",
+      "dG_closest_offtarget": -8.258,
+      "ddG_selectivity": -0.468,
+      "MW": 398.48,
+      "cLogP": 3.33,
+      "TPSA": 77.23,
+      "pose_file": "docking/poses/PLK1_Sunitinib_pose.pdbqt",
+      "dG_NEK4": NaN,
+      "dG_NEK8": NaN,
+      "dG_NEK7": NaN,
+      "dG_RPS6KB1": -7.772,
+      "dG_MARK2": -6.642,
+      "dG_PHKG2": -8.258
+    },
+    {
+      "primary_target": "PLK1",
+      "ligand": "Dasatinib",
+      "dG_primary_kcal": -8.966,
+      "closest_offtarget": "PHKG2",
+      "dG_closest_offtarget": -8.65,
+      "ddG_selectivity": -0.316,
+      "MW": 488.02,
+      "cLogP": 3.31,
+      "TPSA": 106.51,
+      "pose_file": "docking/poses/PLK1_Dasatinib_pose.pdbqt",
+      "dG_NEK4": NaN,
+      "dG_NEK8": NaN,
+      "dG_NEK7": NaN,
+      "dG_RPS6KB1": -7.958,
+      "dG_MARK2": -5.46,
+      "dG_PHKG2": -8.65
+    },
+    {
+      "primary_target": "PLK1",
+      "ligand": "Erlotinib",
+      "dG_primary_kcal": -8.195,
+      "closest_offtarget": "PHKG2",
+      "dG_closest_offtarget": -7.907,
+      "ddG_selectivity": -0.288,
+      "MW": 393.44,
+      "cLogP": 3.41,
+      "TPSA": 74.73,
+      "pose_file": "docking/poses/PLK1_Erlotinib_pose.pdbqt",
+      "dG_NEK4": NaN,
+      "dG_NEK8": NaN,
+      "dG_NEK7": NaN,
+      "dG_RPS6KB1": -6.424,
+      "dG_MARK2": -4.74,
+      "dG_PHKG2": -7.907
+    },
+    {
+      "primary_target": "PLK1",
+      "ligand": "Tofacitinib",
+      "dG_primary_kcal": -7.782,
+      "closest_offtarget": "PHKG2",
+      "dG_closest_offtarget": -7.663,
+      "ddG_selectivity": -0.119,
+      "MW": 312.38,
+      "cLogP": 1.54,
+      "TPSA": 88.91,
+      "pose_file": "docking/poses/PLK1_Tofacitinib_pose.pdbqt",
+      "dG_NEK4": NaN,
+      "dG_NEK8": NaN,
+      "dG_NEK7": NaN,
+      "dG_RPS6KB1": -6.891,
+      "dG_MARK2": -6.287,
+      "dG_PHKG2": -7.663
+    },
+    {
+      "primary_target": "PLK1",
+      "ligand": "Volasertib",
+      "dG_primary_kcal": -7.216,
+      "closest_offtarget": "RPS6KB1",
+      "dG_closest_offtarget": -7.311,
+      "ddG_selectivity": 0.095,
+      "MW": 620.84,
+      "cLogP": 4.51,
+      "TPSA": 106.17,
+      "pose_file": "docking/poses/PLK1_Volasertib_pose.pdbqt",
+      "dG_NEK4": NaN,
+      "dG_NEK8": NaN,
+      "dG_NEK7": NaN,
+      "dG_RPS6KB1": -7.311,
+      "dG_MARK2": -2.554,
+      "dG_PHKG2": 17.55
+    }
+  ],
+  "pocket_contacts": {
+    "NEK2_BI-2536": [
+      {
+        "residue": "LYS143",
+        "min_dist_A": 2.86,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "GLU87",
+        "min_dist_A": 3.17,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ASP93",
+        "min_dist_A": 3.18,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "GLY17",
+        "min_dist_A": 3.33,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "LYS37",
+        "min_dist_A": 3.35,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "PHE148",
+        "min_dist_A": 3.36,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ILE14",
+        "min_dist_A": 3.38,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "LYS174",
+        "min_dist_A": 3.43,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "CYS22",
+        "min_dist_A": 3.46,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ARG164",
+        "min_dist_A": 3.49,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "TYR88",
+        "min_dist_A": 3.51,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "GLY92",
+        "min_dist_A": 3.55,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "TYR19",
+        "min_dist_A": 3.6,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "CYS89",
+        "min_dist_A": 3.63,
+        "interaction_type": "Hydrophobic / vdW"
+      }
+    ],
+    "NEK2_Dasatinib": [
+      {
+        "residue": "ARG164",
+        "min_dist_A": 2.06,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "PHE148",
+        "min_dist_A": 3.01,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ASP141",
+        "min_dist_A": 3.12,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "GLY17",
+        "min_dist_A": 3.37,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "LYS37",
+        "min_dist_A": 3.41,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ASN146",
+        "min_dist_A": 3.45,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "CYS22",
+        "min_dist_A": 3.53,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "CYS89",
+        "min_dist_A": 3.53,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ASP159",
+        "min_dist_A": 3.56,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "PHE160",
+        "min_dist_A": 3.57,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ILE14",
+        "min_dist_A": 3.6,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "VAL35",
+        "min_dist_A": 3.64,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "TYR88",
+        "min_dist_A": 3.64,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "GLY161",
+        "min_dist_A": 3.68,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ALA163",
+        "min_dist_A": 3.69,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "TYR19",
+        "min_dist_A": 3.71,
+        "interaction_type": "Hydrophobic / vdW"
+      }
+    ],
+    "PLK1_Alisertib": [
+      {
+        "residue": "LEU59",
+        "min_dist_A": 2.71,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ARG134",
+        "min_dist_A": 2.77,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ARG136",
+        "min_dist_A": 2.78,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "GLU69",
+        "min_dist_A": 2.95,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "LYS82",
+        "min_dist_A": 3.22,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "GLY62",
+        "min_dist_A": 3.24,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "PHE183",
+        "min_dist_A": 3.3,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "CYS67",
+        "min_dist_A": 3.37,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ASP194",
+        "min_dist_A": 3.39,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ARG57",
+        "min_dist_A": 3.45,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ALA65",
+        "min_dist_A": 3.55,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "LYS61",
+        "min_dist_A": 3.57,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "GLY60",
+        "min_dist_A": 3.61,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ALA80",
+        "min_dist_A": 3.67,
+        "interaction_type": "Hydrophobic / vdW"
+      }
+    ],
+    "PLK1_BI-2536": [
+      {
+        "residue": "CYS133",
+        "min_dist_A": 2.68,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ARG134",
+        "min_dist_A": 3.24,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ARG136",
+        "min_dist_A": 3.3,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "GLU69",
+        "min_dist_A": 3.38,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "LEU59",
+        "min_dist_A": 3.41,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "CYS67",
+        "min_dist_A": 3.41,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "LEU132",
+        "min_dist_A": 3.49,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "VAL114",
+        "min_dist_A": 3.51,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "ASP194",
+        "min_dist_A": 3.52,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "PHE183",
+        "min_dist_A": 3.56,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "LEU130",
+        "min_dist_A": 3.59,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "LYS61",
+        "min_dist_A": 3.67,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "GLY62",
+        "min_dist_A": 3.71,
+        "interaction_type": "Hydrophobic / vdW"
+      },
+      {
+        "residue": "GLU131",
+        "min_dist_A": 3.74,
+        "interaction_type": "Hydrophobic / vdW"
+      }
+    ]
+  }
+}
