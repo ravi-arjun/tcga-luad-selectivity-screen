@@ -2,10 +2,10 @@ import os
 import requests
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import networkx as nx
-from lifelines import KaplanMeierFitter, CoxPHFitter
-from lifelines.statistics import logrank_test
+from lifelines import CoxPHFitter
+from lifelines.statistics import logrank_test, proportional_hazard_test
+from statsmodels.stats.multitest import multipletests
 
 
 def load_clean_clinical(clinical_path):
@@ -62,25 +62,25 @@ def load_clean_clinical(clinical_path):
 
 def run_survival_screen(expr_df, sample_meta, annotated_de, patient_df, top_n=100, output_dir="results"):
     """
-    Screens top overexpressed genes via Kaplan-Meier Log-Rank test and 
-    Multivariate Cox Proportional Hazards (adjusted for age, gender, tumor stage).
+    Screens top overexpressed genes via pre-specified median-split Kaplan-Meier Log-Rank test
+    and Multivariate Cox Proportional Hazards (adjusted for age, gender, tumor stage),
+    including Benjamini-Hochberg FDR correction and Schoenfeld PH diagnostics.
     """
     # Filter to tumor samples only (Primary Tumor)
     tumor_samples = sample_meta[sample_meta["condition"] == "tumor"].copy()
-    
-    # Extract 12-char TCGA patient barcode (e.g., TCGA-67-3773) from sample_id / barcode
-    # Adjust column name below if your sample_meta stores barcode under 'barcode' or 'sample_id'
+
+    # Extract 12-char TCGA patient barcode (e.g., TCGA-67-3773) and deduplicate per patient
     barcode_col = "tcga_id" if "tcga_id" in tumor_samples.columns else ("barcode" if "barcode" in tumor_samples.columns else "sample_id")
     tumor_samples["patient_id"] = tumor_samples[barcode_col].str.slice(0, 12)
     tumor_samples = tumor_samples.drop_duplicates(subset=["patient_id"])
 
     # Merge tumor sample IDs with clinical survival data
     merged_meta = pd.merge(tumor_samples, patient_df, left_on="patient_id", right_on="cases.submitter_id")
-    print(f"Matched Tumor RNA-seq samples with Survival metadata: {len(merged_meta)}")
+    print(f"Matched unique Tumor RNA-seq patients with Survival metadata: {len(merged_meta)}")
 
     # Select top N significantly upregulated genes with valid HUGO symbols
     up_genes = annotated_de[
-        (annotated_de["padj"] < 0.05) & (annotated_de["log2FoldChange"] >= 1.5)
+        (annotated_de["padj"] < 0.01) & (annotated_de["log2FoldChange"] > 1.5)
     ].copy()
     up_genes = up_genes[~up_genes["symbol"].str.startswith("ENSG", na=True)]
     up_genes["score"] = up_genes["log2FoldChange"] * (-np.log10(up_genes["padj"].replace(0, 1e-300)))
@@ -94,32 +94,41 @@ def run_survival_screen(expr_df, sample_meta, annotated_de, patient_df, top_n=10
             continue
         symbol = row["symbol"]
         gene_vals = expr_df.loc[ensg_id, valid_sample_ids].values
-        
+
         df_gene = merged_meta.copy()
         df_gene["expr"] = gene_vals
-        
-        # Median split for Kaplan-Meier
+
+        # Pre-specified median split for Kaplan-Meier (no p-value optimization)
         median_val = df_gene["expr"].median()
         high_grp = df_gene[df_gene["expr"] >= median_val]
         low_grp = df_gene[df_gene["expr"] < median_val]
-        
+
         if len(high_grp) < 10 or len(low_grp) < 10:
             continue
 
-        lr = logrank_test(high_grp["time"], low_grp["time"], event_observed_A=high_grp["event"], event_observed_B=low_grp["event"])
-        
+        lr = logrank_test(
+            high_grp["time"],
+            low_grp["time"],
+            event_observed_A=high_grp["event"],
+            event_observed_B=low_grp["event"],
+        )
+
         # Multivariate Cox Regression (expr Z-score + age + sex + stage)
-# Regularized Multivariate Cox Regression (prevents collinearity singular matrix)
         cox_df = df_gene[["time", "event", "expr", "age", "is_male", "advanced_stage"]].dropna().copy()
         cox_df["expr_z"] = (cox_df["expr"] - cox_df["expr"].mean()) / (cox_df["expr"].std() + 1e-8)
 
+        ph_test_p = np.nan
+        model_type = "multivariate"
         try:
             cph = CoxPHFitter(penalizer=0.1)
             cph.fit(cox_df, duration_col="time", event_col="event")
             hr = float(np.exp(cph.params_["expr_z"]))
             cox_p = float(cph.summary.loc["expr_z", "p"])
+            # Schoenfeld residual diagnostic for proportional hazards assumption
+            ph_res = proportional_hazard_test(cph, cox_df, time_transform="rank")
+            ph_test_p = float(ph_res.summary.loc["expr_z", "p"])
         except Exception:
-            # Fallback to univariate Cox on expression Z-score alone
+            model_type = "univariate_fallback"
             cph_uni = CoxPHFitter(penalizer=0.1)
             cph_uni.fit(cox_df[["time", "event", "expr_z"]], duration_col="time", event_col="event")
             hr = float(np.exp(cph_uni.params_["expr_z"]))
@@ -133,29 +142,40 @@ def run_survival_screen(expr_df, sample_meta, annotated_de, patient_df, top_n=10
             "km_logrank_p": lr.p_value,
             "cox_HR": hr,
             "cox_multivar_p": cox_p,
+            "schoenfeld_ph_p": ph_test_p,
+            "ph_assumption_ok": bool(pd.isna(ph_test_p) or ph_test_p >= 0.05),
+            "cox_model": model_type,
         })
 
     surv_df = pd.DataFrame(survival_results)
-    # Keep genes where higher expression significantly worsens survival (HR > 1 and p < 0.05)
+
+    # Apply Benjamini-Hochberg FDR correction across all tested survival hypotheses
+    if not surv_df.empty:
+        surv_df["km_logrank_padj"] = multipletests(surv_df["km_logrank_p"], method="fdr_bh")[1]
+        surv_df["cox_multivar_padj"] = multipletests(surv_df["cox_multivar_p"], method="fdr_bh")[1]
+
+    # Filter prognostic candidate genes: FDR-adjusted significance (padj < 0.10) & HR > 1.0
     prognostic = surv_df[
-        ((surv_df["km_logrank_p"] < 0.05) | (surv_df["cox_multivar_p"] < 0.05)) & (surv_df["cox_HR"] > 1.0)
-    ].sort_values("cox_multivar_p")
+        ((surv_df["km_logrank_padj"] < 0.10) | (surv_df["cox_multivar_padj"] < 0.10))
+        & (surv_df["cox_HR"] > 1.0)
+    ].sort_values("cox_multivar_padj")
+
     os.makedirs(output_dir, exist_ok=True)
     surv_df.to_csv(f"{output_dir}/LUAD_all_survival_screen.csv", index=False)
-    prognostic.to_csv(f"{output_dir}/LUAD_prognostic_drivers.csv", index=False)
-    print(f"\nFound {len()} statistically significant prognostic drivers (KM p < 0.05, HR > 1.0)!")
+    prognostic.to_csv(f"{output_dir}/LUAD_prognostic_candidates.csv", index=False)
+    print(f"\nFound {len(prognostic)} prognostic candidate genes (FDR-adjusted p < 0.10, HR > 1.0)!")
     return prognostic, merged_meta
 
 
 def query_string_hubs(gene_symbols, output_dir="results"):
     """
-    Queries the STRING v12 PPI API to compute network degree centrality 
-    and prioritize signaling hub bottlenecks among prognostic candidates.
+    Queries the STRING v12 functional association API to compute network degree
+    centrality and prioritize connected signaling candidates.
     """
     if len(gene_symbols) < 2:
         return pd.DataFrame()
-    
-    print(f"\nQuerying STRING PPI network for {len(gene_symbols)} prognostic genes...")
+
+    print(f"\nQuerying STRING functional association network for {len(gene_symbols)} prognostic candidates...")
     url = "https://version-12-0.string-db.org/api/json/network"
     params = {
         "identifiers": "%0d".join(gene_symbols[:50]),
@@ -175,9 +195,9 @@ def query_string_hubs(gene_symbols, output_dir="results"):
     bet = nx.betweenness_centrality(G)
     hub_df = pd.DataFrame({
         "symbol": list(G.nodes()),
-        "ppi_degree": [deg[n] for n in G.nodes()],
+        "string_degree": [deg[n] for n in G.nodes()],
         "betweenness": [round(bet[n], 4) for n in G.nodes()],
-    }).sort_values(by=["ppi_degree", "betweenness"], ascending=False)
+    }).sort_values(by=["string_degree", "betweenness"], ascending=False)
 
-    hub_df.to_csv(f"{output_dir}/LUAD_ppi_hubs.csv", index=False)
+    hub_df.to_csv(f"{output_dir}/LUAD_string_hubs.csv", index=False)
     return hub_df

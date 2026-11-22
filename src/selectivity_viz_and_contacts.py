@@ -50,7 +50,7 @@ def extract_pocket_contacts(receptor_pdbqt, ligand_pose_pdbqt, cutoff=3.8):
                 residue_min_dist[res_label] = {
                     "residue": res_label,
                     "min_dist_A": round(min_d, 2),
-                    "interaction_type": "Polar / H-Bond Candidate" if (is_polar and min_d <= 3.4) else "Hydrophobic / vdW",
+                    "interaction_type": "Polar / H-Bond Candidate" if (is_polar and min_d <= 3.4) else "Steric / Hydrophobic Proximity",
                 }
 
     return sorted(residue_min_dist.values(), key=lambda x: x["min_dist_A"])
@@ -64,31 +64,30 @@ def build_selectivity_plots_and_contacts(
     df = pd.read_csv(screen_csv)
     os.makedirs("plots", exist_ok=True)
 
-    # 1. Extract pocket contacts for top candidates
+    # 1. Extract pocket contacts for all 20 primary target-ligand poses
     contact_summary = {}
-    pairs_to_inspect = [
-        ("NEK2", "BI-2536", "docking/receptors/NEK2_primary.pdbqt", "docking/poses/NEK2_BI-2536_pose.pdbqt"),
-        ("NEK2", "Dasatinib", "docking/receptors/NEK2_primary.pdbqt", "docking/poses/NEK2_Dasatinib_pose.pdbqt"),
-        ("PLK1", "Alisertib", "docking/receptors/PLK1_primary.pdbqt", "docking/poses/PLK1_Alisertib_pose.pdbqt"),
-        ("PLK1", "BI-2536", "docking/receptors/PLK1_primary.pdbqt", "docking/poses/PLK1_BI-2536_pose.pdbqt"),
-    ]
-    for tgt, lig, rec_p, pose_p in pairs_to_inspect:
+    for _, row in df.iterrows():
+        tgt = row["primary_target"]
+        lig = row["ligand"]
+        rec_p = f"docking/receptors/{tgt}_primary.pdbqt"
+        pose_p = row["pose_file"]
         if os.path.exists(rec_p) and os.path.exists(pose_p):
             contacts = extract_pocket_contacts(rec_p, pose_p, cutoff=3.8)
             contact_summary[f"{tgt}_{lig}"] = contacts
-            top_res = ", ".join([f"{c['residue']} ({c['min_dist_A']}A)" for c in contacts[:6]])
-            print(f"[{tgt} + {lig}] Key Pocket Contacts (<3.8 A): {top_res}")
+            if (tgt == "PLK1" and lig in {"Alisertib", "BI-2536"}) or (tgt == "NEK2" and lig in {"BI-2536", "Dasatinib"}):
+                top_res = ", ".join([f"{c['residue']} ({c['min_dist_A']}A)" for c in contacts[:6]])
+                print(f"[{tgt} + {lig}] Key Pocket Contacts (<3.8 A): {top_res}")
 
     # 2. Generate 2-Panel Summary Figure
     fig, axes = plt.subplots(1, 2, figsize=(15, 6.2))
 
-    # Panel A: Selectivity Margin (ddG) vs Primary Affinity (dG)
+    # Panel A: Docking Score Differential (dS_Vina) vs Primary Vina Score
     ax1 = axes[0]
     colors = {"NEK2": "#e67e22", "PLK1": "#8e44ad"}
     for tgt, grp in df.groupby("primary_target"):
         ax1.scatter(
-            grp["dG_primary_kcal"],
-            grp["ddG_selectivity"],
+            grp["score_primary_vina"],
+            grp["delta_S_vina"],
             s=110,
             color=colors[tgt],
             edgecolors="black",
@@ -99,44 +98,44 @@ def build_selectivity_plots_and_contacts(
         for _, r in grp.iterrows():
             ax1.annotate(
                 r["ligand"],
-                (r["dG_primary_kcal"], r["ddG_selectivity"]),
+                (r["score_primary_vina"], r["delta_S_vina"]),
                 xytext=(5, 4),
                 textcoords="offset points",
                 fontsize=8.5,
             )
 
-    ax1.axhline(-0.5, color="#27ae60", linestyle="--", linewidth=1.2, label="Selectivity Threshold (ddG <= -0.5)")
-    ax1.axvline(-8.5, color="#2980b9", linestyle=":", linewidth=1.2, label="Potency Threshold (dG <= -8.5)")
+    ax1.axhline(-0.5, color="#27ae60", linestyle="--", linewidth=1.2, label="Selectivity Threshold (dS_Vina <= -0.5)")
+    ax1.axvline(-8.5, color="#2980b9", linestyle=":", linewidth=1.2, label="Score Threshold (S_Vina <= -8.5)")
     ax1.axvspan(-10.5, -8.5, ymin=0, ymax=0.35, color="#2ecc71", alpha=0.08)
-    ax1.set_title("A. Potency vs. Paralog Selectivity Quadrant", fontsize=12, weight="bold")
-    ax1.set_xlabel("Primary Target Binding Affinity dG (kcal/mol)  [More Negative = Stronger]", fontsize=10)
-    ax1.set_ylabel("Selectivity Margin ddG = dG_primary - dG_offtarget (kcal/mol)", fontsize=10)
+    ax1.set_title("A. Vina Docking Score vs. Structural Off-Target Differential", fontsize=12, weight="bold")
+    ax1.set_xlabel("Primary Target Vina Score S_primary (kcal/mol equiv.)  [More Negative = Stronger]", fontsize=10)
+    ax1.set_ylabel("Selectivity Differential dS_Vina = S_primary - S_offtarget", fontsize=10)
     ax1.grid(True, linestyle="--", alpha=0.3)
     ax1.legend(loc="upper left", fontsize=8.5)
 
-    # Panel B: Grouped Bar Chart of ddG Selectivity Across All 10 Ligands
+    # Panel B: Grouped Bar Chart of dS_Vina Across All 10 Ligands
     ax2 = axes[1]
-    ligands = df[df["primary_target"] == "PLK1"].sort_values("ddG_selectivity")["ligand"].tolist()
+    ligands = df[df["primary_target"] == "PLK1"].sort_values("delta_S_vina")["ligand"].tolist()
     x = np.arange(len(ligands))
     width = 0.38
 
-    nek2_ddg = [df[(df["primary_target"] == "NEK2") & (df["ligand"] == l)]["ddG_selectivity"].values[0] for l in ligands]
-    plk1_ddg = [df[(df["primary_target"] == "PLK1") & (df["ligand"] == l)]["ddG_selectivity"].values[0] for l in ligands]
+    nek2_ds = [df[(df["primary_target"] == "NEK2") & (df["ligand"] == l)]["delta_S_vina"].values[0] for l in ligands]
+    plk1_ds = [df[(df["primary_target"] == "PLK1") & (df["ligand"] == l)]["delta_S_vina"].values[0] for l in ligands]
 
-    ax2.bar(x - width / 2, nek2_ddg, width, label="NEK2 vs. NEK4/7/8", color="#e67e22", edgecolor="black")
-    ax2.bar(x + width / 2, plk1_ddg, width, label="PLK1 vs. RPS6KB1/MARK2/PHKG2", color="#8e44ad", edgecolor="black")
+    ax2.bar(x - width / 2, nek2_ds, width, label="NEK2 vs. NEK4/7/8", color="#e67e22", edgecolor="black")
+    ax2.bar(x + width / 2, plk1_ds, width, label="PLK1 vs. RPS6KB1/MARK2/PHKG2", color="#8e44ad", edgecolor="black")
     ax2.axhline(0, color="black", linewidth=1)
     ax2.axhline(-0.5, color="#27ae60", linestyle="--", linewidth=1.1)
     ax2.set_xticks(x)
     ax2.set_xticklabels(ligands, rotation=35, ha="right", fontsize=9)
-    ax2.set_title("B. Off-Target Counter-Screen Selectivity Margin (ddG)", fontsize=12, weight="bold")
-    ax2.set_ylabel("ddG Selectivity Margin (kcal/mol)  [Negative = Selective]", fontsize=10)
+    ax2.set_title("B. Off-Target Counter-Screen Score Differential (dS_Vina)", fontsize=12, weight="bold")
+    ax2.set_ylabel("dS_Vina Differential  [Negative = Primary Preferred]", fontsize=10)
     ax2.grid(True, axis="y", linestyle="--", alpha=0.3)
     ax2.legend(loc="lower right", fontsize=9)
 
     plt.tight_layout()
     plt.savefig(out_png, dpi=300, bbox_inches="tight")
-    print(f"\nSaved publication selectivity summary figure to '{out_png}'")
+    print(f"\nSaved selectivity summary figure to '{out_png}'")
 
     # 3. Export complete JSON bundle for web dashboard
     bundle = {

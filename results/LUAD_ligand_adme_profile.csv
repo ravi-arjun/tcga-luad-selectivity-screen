@@ -1,11 +1,11 @@
-ligand,smiles,MW,cLogP,TPSA,HBD,HBA,pdbqt_path
-BI-2536,CCC1C(=O)N(C)c2nc(Nc3ccc(C(=O)NC4CCN(C)CC4)cc3OC)ncc2N1C1CCCC1,521.67,3.56,102.93,2,8,docking/ligands\BI-2536.pdbqt
-Volasertib,CCC1C(=O)N(C)c2nc(Nc3ccc(C(=O)NC4CCC(N5CCN(CC(C)C)CC5)CC4)cc3OC)ncc2N1C(C)C,620.84,4.51,106.17,2,9,docking/ligands\Volasertib.pdbqt
-Hesperadin,CCN1CCN(CC(=O)Nc2ccc(C(=C3C(=O)Nc4ccc(S(=O)(=O)CC)cc43)c3ccccc3)cc2)CC1,558.7,3.97,98.82,2,6,docking/ligands\Hesperadin.pdbqt
-Rigosertib,COc1cc(OC)c(CS(=O)(=O)C=Cc2ccc(OC)c(NCC(=O)O)c2)c(OC)c1,451.5,2.8,120.39,2,8,docking/ligands\Rigosertib.pdbqt
-Alisertib,COc1cccc(C2=NCc3cnc(Nc4ccc(C(=O)O)cc4OC)nc3-c3ccc(Cl)cc32)c1F,518.93,5.75,105.93,2,7,docking/ligands\Alisertib.pdbqt
-Barasertib,CCN(CC)CC(=O)Nc1ccc(Nc2ncnc3cc(OCCCN4CCN(CCO)CC4)c(OC)cc23)cc1,565.72,3.04,115.32,3,10,docking/ligands\Barasertib.pdbqt
-Dasatinib,Cc1nc(Nc2ncc(C(=O)Nc3c(C)cccc3Cl)s2)cc(N2CCN(CCO)CC2)n1,488.02,3.31,106.51,3,9,docking/ligands\Dasatinib.pdbqt
-Erlotinib,COCCOc1cc2ncnc(Nc3cccc(C#C)c3)c2cc1OCCOC,393.44,3.41,74.73,1,7,docking/ligands\Erlotinib.pdbqt
-Sunitinib,CCN(CC)CCNC(=O)c1c(C)[nH]c(C=C2C(=O)Nc3ccc(F)cc32)c1C,398.48,3.33,77.23,3,3,docking/ligands\Sunitinib.pdbqt
-Tofacitinib,CC1CCN(C(=O)CC#N)CC1N(C)c1ncnc2[nH]ccc12,312.38,1.54,88.91,1,5,docking/ligands\Tofacitinib.pdbqt
+ligand,established_target,clinical_status,smiles,MW,cLogP,TPSA,HBD,HBA,pdbqt_path
+BI-2536,PLK1 (Polo-like kinase 1; secondary PLK2/PLK3),Phase II (mitotic kinase inhibitor),CCC1C(=O)N(C)c2nc(Nc3ccc(C(=O)NC4CCN(C)CC4)cc3OC)ncc2N1C1CCCC1,521.67,3.56,102.93,2,8,docking/ligands\BI-2536.pdbqt
+Volasertib,PLK1 (Polo-like kinase 1),Phase III (mitotic kinase inhibitor),CCC1C(=O)N(C)c2nc(Nc3ccc(C(=O)NC4CCC(N5CCN(CC(C)C)CC5)CC4)cc3OC)ncc2N1C(C)C,620.84,4.51,106.17,2,9,docking/ligands\Volasertib.pdbqt
+Hesperadin,AURKB (Aurora B kinase),Preclinical mitotic tool compound,CCN1CCN(CC(=O)Nc2ccc(C(=C3C(=O)Nc4ccc(S(=O)(=O)CC)cc43)c3ccccc3)cc2)CC1,558.7,3.97,98.82,2,6,docking/ligands\Hesperadin.pdbqt
+Rigosertib,PLK1 / RAS-PI3K pathway modulator,Phase III,COc1cc(OC)c(CS(=O)(=O)C=Cc2ccc(OC)c(NCC(=O)O)c2)c(OC)c1,451.5,2.8,120.39,2,8,docking/ligands\Rigosertib.pdbqt
+Alisertib,AURKA (Aurora A kinase),Phase III (mitotic kinase inhibitor),COc1cccc(C2=NCc3cnc(Nc4ccc(C(=O)O)cc4OC)nc3-c3ccc(Cl)cc32)c1F,518.93,5.75,105.93,2,7,docking/ligands\Alisertib.pdbqt
+Barasertib,AURKB (Aurora B kinase),Phase II/III,CCN(CC)CC(=O)Nc1ccc(Nc2ncnc3cc(OCCCN4CCN(CCO)CC4)c(OC)cc23)cc1,565.72,3.04,115.32,3,10,docking/ligands\Barasertib.pdbqt
+Dasatinib,ABL1 / SRC family kinases,FDA-approved,Cc1nc(Nc2ncc(C(=O)Nc3c(C)cccc3Cl)s2)cc(N2CCN(CCO)CC2)n1,488.02,3.31,106.51,3,9,docking/ligands\Dasatinib.pdbqt
+Erlotinib,EGFR (ErbB1 receptor tyrosine kinase),FDA-approved (NSCLC),COCCOc1cc2ncnc(Nc3cccc(C#C)c3)c2cc1OCCOC,393.44,3.41,74.73,1,7,docking/ligands\Erlotinib.pdbqt
+Sunitinib,VEGFR2 / PDGFRB / KIT multi-RTK,FDA-approved,CCN(CC)CCNC(=O)c1c(C)[nH]c(C=C2C(=O)Nc3ccc(F)cc32)c1C,398.48,3.33,77.23,3,3,docking/ligands\Sunitinib.pdbqt
+Tofacitinib,JAK1 / JAK3 (Janus kinases),FDA-approved,CC1CCN(C(=O)CC#N)CC1N(C)c1ncnc2[nH]ccc12,312.38,1.54,88.91,1,5,docking/ligands\Tofacitinib.pdbqt

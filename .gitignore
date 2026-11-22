@@ -1,0 +1,9 @@
+﻿__pycache__/
+*.pyc
+.vscode/
+bin/
+data/
+*.tsv
+*.gz
+luad_raw_counts.csv
+*.pkl
