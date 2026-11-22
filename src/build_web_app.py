@@ -1,7 +1,8 @@
 import os
 import json
-import pandas as pd
 import math
+import pandas as pd
+
 
 def pdbqt_to_pdb_block(pdbqt_path, first_model_only=True):
     """Converts a receptor or docked ligand PDBQT file into a clean PDB text block for 3Dmol.js."""
@@ -61,7 +62,6 @@ def build_static_site(out_dir="docs"):
         "structures_3d": structures_3d,
     }
 
-# Strict allow_nan=False guarantees 100% browser-valid JSON
     def clean_nans(obj):
         if isinstance(obj, float):
             return None if (math.isnan(obj) or math.isinf(obj)) else obj
@@ -72,14 +72,13 @@ def build_static_site(out_dir="docs"):
         return obj
 
     embedded_json = json.dumps(clean_nans(site_payload), allow_nan=False)
-    embedded_json = json.dumps(clean_nans(site_payload), allow_nan=False)
 
     html_code = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TCGA-LUAD Paralog-Selective Drug Discovery Pipeline</title>
+  <title>TCGA-LUAD Target Prioritization &amp; Computational Selectivity Screen</title>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
   <style>
@@ -120,10 +119,10 @@ def build_static_site(out_dir="docs"):
       margin-bottom: 0.6rem;
     }}
     h1 {{ margin: 0 0 0.5rem; font-size: 1.85rem; }}
-    .subtitle {{ color: var(--muted); max-width: 860px; margin: 0 0 1.2rem; font-size: 0.98rem; }}
+    .subtitle {{ color: var(--muted); max-width: 880px; margin: 0 0 1.2rem; font-size: 0.98rem; }}
     .metrics-grid {{
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
       gap: 0.9rem;
       margin-top: 1rem;
     }}
@@ -166,8 +165,8 @@ def build_static_site(out_dir="docs"):
       border: 1px solid var(--border);
       background: #090d16;
     }}
-    table {{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }}
-    th, td {{ padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--border); text-align: left; }}
+    table {{ width: 100%; border-collapse: collapse; font-size: 0.86rem; }}
+    th, td {{ padding: 0.55rem 0.65rem; border-bottom: 1px solid var(--border); text-align: left; }}
     th {{ color: var(--muted); font-weight: 600; }}
     .pill-sel {{
       background: rgba(34, 197, 94, 0.16);
@@ -191,6 +190,11 @@ def build_static_site(out_dir="docs"):
       margin: 0.2rem;
       font-size: 0.82rem;
     }}
+    .disclaimer {{
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }}
     footer {{
       border-top: 1px solid var(--border);
       padding: 1.5rem;
@@ -204,25 +208,25 @@ def build_static_site(out_dir="docs"):
 <body>
   <header>
     <div class="container">
-      <div class="badge">Computational Oncology &amp; Structural Drug Discovery</div>
-      <h1>Paralog-Selective Target &amp; Ligand Discovery in Lung Adenocarcinoma (TCGA-LUAD)</h1>
+      <div class="badge">Computational Oncology &amp; Structure-Guided Target Prioritization (v1.0)</div>
+      <h1>Transcriptomic &amp; Structure-Guided Target Prioritization in Lung Adenocarcinoma (TCGA-LUAD)</h1>
       <p class="subtitle">
-        End-to-end multi-omics &amp; structure-based counter-screening pipeline integrating <strong>PyDESeq2</strong> differential expression,
-        <strong>Kaplan–Meier / Cox</strong> survival stratification, <strong>STRING</strong> network centrality, <strong>Foldseek</strong> 3D proteome paralog mapping,
-        and <strong>AutoDock Vina (&Delta;&Delta;G)</strong> off-target selectivity screening.
+        Interactive computational screening platform integrating <strong>PyDESeq2</strong> differential expression,
+        <strong>Kaplan–Meier / Multivariate Cox</strong> survival stratification (FDR-adjusted), <strong>STRING</strong> functional network prioritization,
+        <strong>Foldseek</strong> 3D proteome off-target alignment, and <strong>AutoDock Vina (&Delta;S<sub>Vina</sub>)</strong> cross-screening.
       </p>
       <div class="metrics-grid">
-        <div class="metric-card"><div class="metric-val">42 Drivers</div><div class="metric-lbl">Prognostic LUAD Genes (FDR &lt; 0.01, Cox p &lt; 0.05)</div></div>
-        <div class="metric-card"><div class="metric-val">NEK2 &amp; PLK1</div><div class="metric-lbl">Top Druggable Mitotic Kinase Hubs</div></div>
-        <div class="metric-card"><div class="metric-val">6 Paralogs</div><div class="metric-lbl">Foldseek 3D Structural Off-Targets Counter-Screened</div></div>
-        <div class="metric-card"><div class="metric-val">-1.90 kcal/mol</div><div class="metric-lbl">Peak Selectivity Margin (&Delta;&Delta;G, Alisertib on PLK1)</div></div>
+        <div class="metric-card"><div class="metric-val">42 Candidates</div><div class="metric-lbl">Prognostic LUAD Genes (DESeq2 FDR &lt; 0.01, Cox HR &gt; 1)</div></div>
+        <div class="metric-card"><div class="metric-val">NEK2 &amp; PLK1</div><div class="metric-lbl">Network-Prioritized Mitotic Kinase Targets</div></div>
+        <div class="metric-card"><div class="metric-val">6 Off-Targets</div><div class="metric-lbl">Foldseek + ATP-Pocket Superposed Homologs</div></div>
+        <div class="metric-card"><div class="metric-val">-1.90 (&Delta;S<sub>Vina</sub>)</div><div class="metric-lbl">Peak In Silico Score Margin (Alisertib on PLK1)</div></div>
       </div>
     </div>
   </header>
 
   <main class="container section">
     <div class="card">
-      <h2>1. Interactive 3D ATP-Pocket Docking &amp; Selectivity Viewer (AutoDock Vina 1.2.7)</h2>
+      <h2>1. Interactive 3D ATP-Pocket Docking &amp; Off-Target Counter-Screen Viewer (AutoDock Vina 1.2.7)</h2>
       <div class="controls">
         <label>Primary Target:
           <select id="targetSelect">
@@ -230,7 +234,7 @@ def build_static_site(out_dir="docs"):
             <option value="NEK2">NEK2 (PDB: 2W5B)</option>
           </select>
         </label>
-        <label>Candidate Ligand:
+        <label>Cross-Screened Ligand:
           <select id="ligandSelect"></select>
         </label>
         <button id="spinBtn">Toggle Spin</button>
@@ -239,14 +243,15 @@ def build_static_site(out_dir="docs"):
       <div class="grid-2">
         <div>
           <div id="viewer3d"></div>
+          <p class="disclaimer">*Predicted rigid-receptor Vina poses represent computational hypotheses rather than experimentally resolved co-crystal structures.</p>
         </div>
         <div>
           <div id="ligandStatsCard" style="margin-bottom: 1rem;"></div>
-          <h3 style="font-size: 1rem; margin-bottom: 0.4rem;">Catalytic Pocket Contacts (&lt; 3.8 &Aring;)</h3>
+          <h3 style="font-size: 1rem; margin-bottom: 0.4rem;">Nearby ATP-Pocket Residues (&lt; 3.8 &Aring; Proximity)</h3>
           <div id="contactsContainer"></div>
-          <h3 style="font-size: 1rem; margin: 1rem 0 0.4rem;">Foldseek Structural Off-Target Paralogs</h3>
+          <h3 style="font-size: 1rem; margin: 1rem 0 0.4rem;">Foldseek &amp; ATP-Pocket Structural Off-Target Candidates</h3>
           <table id="offtargetTable">
-            <thead><tr><th>Off-Target</th><th>UniProt</th><th>Foldseek E-val</th><th>Seq ID</th></tr></thead>
+            <thead><tr><th>Off-Target</th><th>UniProt</th><th>Foldseek E-val</th><th>Seq ID</th><th>Pocket RMSD</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -255,28 +260,29 @@ def build_static_site(out_dir="docs"):
 
     <div class="grid-2">
       <div class="card">
-        <h2>2. Potency (&Delta;G) vs. Paralog Selectivity (&Delta;&Delta;G)</h2>
+        <h2>2. Vina Docking Score (S<sub>primary</sub>) vs. Off-Target Margin (&Delta;S<sub>Vina</sub>)</h2>
         <div id="selectivityPlot" style="height: 390px;"></div>
       </div>
       <div class="card">
-        <h2>3. TCGA-LUAD Overall Survival (Kaplan–Meier)</h2>
+        <h2>3. TCGA-LUAD Overall Survival (Median-Split Kaplan–Meier)</h2>
         <div class="controls" id="kmGeneButtons"></div>
         <div id="kmPlot" style="height: 345px;"></div>
       </div>
     </div>
 
     <div class="card">
-      <h2>4. Complete Off-Target Counter-Screening &amp; ADME Matrix (80 Docking Runs)</h2>
+      <h2>4. Complete Cross-Screening &amp; Physicochemical Profile Matrix (80 Vina Runs)</h2>
       <div style="overflow-x: auto;">
         <table id="fullScreenTable">
           <thead>
             <tr>
-              <th>Target</th>
+              <th>Screen Target</th>
               <th>Ligand</th>
-              <th>&Delta;G Primary (kcal/mol)</th>
+              <th>Established Clinical Target</th>
+              <th>S<sub>primary</sub> (Vina)</th>
               <th>Closest Off-Target</th>
-              <th>&Delta;G Off-Target</th>
-              <th>Selectivity &Delta;&Delta;G</th>
+              <th>S<sub>off-target</sub> (Vina)</th>
+              <th>&Delta;S<sub>Vina</sub></th>
               <th>MW</th>
               <th>cLogP</th>
               <th>TPSA (&Aring;&sup2;)</th>
@@ -289,7 +295,7 @@ def build_static_site(out_dir="docs"):
   </main>
 
   <footer>
-    Developed by Arjun Ravi &bull; Department of Awesomeness, Cool University &bull; Data: TCGA-LUAD, STRING v12, AlphaFold DB, Foldseek, RCSB PDB
+    Developed by Arjun Ravi &bull; B.Tech. Industrial Biotechnology, Anna University &bull; Data: TCGA-LUAD, STRING v12, AlphaFold DB, Foldseek, RCSB PDB
   </footer>
 
   <script>
@@ -354,16 +360,19 @@ def build_static_site(out_dir="docs"):
       glviewer.render();
 
       const row = DATA.docking_results.find(r => r.primary_target === tgt && r.ligand === lig);
-      const isSel = row.ddG_selectivity <= -0.5;
+      const isSel = row.delta_S_vina <= -0.5;
       document.getElementById("ligandStatsCard").innerHTML = `
         <div style="background:#0f172a; padding:0.85rem; border-radius:8px; border:1px solid #334155;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong style="font-size:1.05rem;">${{lig}} &rarr; ${{tgt}}</strong>
-            <span class="${{isSel ? 'pill-sel' : 'pill-non'}}">&Delta;&Delta;G = ${{row.ddG_selectivity > 0 ? '+' : ''}}${{row.ddG_selectivity.toFixed(2)}} kcal/mol</span>
+            <span class="${{isSel ? 'pill-sel' : 'pill-non'}}">&Delta;S<sub>Vina</sub> = ${{row.delta_S_vina > 0 ? '+' : ''}}${{row.delta_S_vina.toFixed(2)}}</span>
           </div>
-          <p style="margin:0.5rem 0 0; font-size:0.88rem; color:#cbd5e1;">
-            Primary Affinity: <strong>${{row.dG_primary_kcal.toFixed(2)}} kcal/mol</strong> &bull;
-            Closest Paralog (${{row.closest_offtarget}}): <strong>${{row.dG_closest_offtarget.toFixed(2)}} kcal/mol</strong><br/>
+          <p style="margin:0.4rem 0 0; font-size:0.84rem; color:#94a3b8;">
+            Established Pharmacology: <strong style="color:#e2e8f0;">${{row.established_target || 'Clinical Kinase Inhibitor'}}</strong>
+          </p>
+          <p style="margin:0.35rem 0 0; font-size:0.86rem; color:#cbd5e1;">
+            Primary Vina Score: <strong>${{row.score_primary_vina.toFixed(2)}}</strong> &bull;
+            Closest Off-Target (${{row.closest_offtarget}}): <strong>${{row.score_closest_offtarget_vina.toFixed(2)}}</strong><br/>
             MW: ${{row.MW}} Da &bull; cLogP: ${{row.cLogP}} &bull; TPSA: ${{row.TPSA}} &Aring;&sup2;
           </p>
         </div>
@@ -382,6 +391,7 @@ def build_static_site(out_dir="docs"):
           <td>${{o.offtarget_uniprot}}</td>
           <td>${{Number(o.evalue).toExponential(2)}}</td>
           <td>${{o.seq_id}}%</td>
+          <td>${{o.atp_pocket_rmsd_A ? o.atp_pocket_rmsd_A + ' &Aring;' : 'N/A'}}</td>
         </tr>
       `).join("");
     }}
@@ -390,14 +400,14 @@ def build_static_site(out_dir="docs"):
       const traces = ["NEK2", "PLK1"].map(tgt => {{
         const sub = DATA.docking_results.filter(r => r.primary_target === tgt);
         return {{
-          x: sub.map(r => r.dG_primary_kcal),
-          y: sub.map(r => r.ddG_selectivity),
+          x: sub.map(r => r.score_primary_vina),
+          y: sub.map(r => r.delta_S_vina),
           text: sub.map(r => r.ligand),
           mode: "markers+text",
           textposition: "top center",
-          name: `${{tgt}} Target`,
+          name: `${{tgt}} Screen`,
           marker: {{ size: 11, color: tgt === "PLK1" ? "#a855f7" : "#f97316", line: {{ width: 1, color: "#fff" }} }},
-          hovertemplate: "<b>%{{text}}</b> (" + tgt + ")<br>&Delta;G: %{{x:.2f}} kcal/mol<br>&Delta;&Delta;G: %{{y:.2f}} kcal/mol<extra></extra>"
+          hovertemplate: "<b>%{{text}}</b> (" + tgt + ")<br>S_primary: %{{x:.2f}}<br>&Delta;S_Vina: %{{y:.2f}}<extra></extra>"
         }};
       }});
 
@@ -406,8 +416,8 @@ def build_static_site(out_dir="docs"):
         plot_bgcolor: "#0f172a",
         font: {{ color: "#e2e8f0" }},
         margin: {{ t: 20, r: 20, b: 48, l: 55 }},
-        xaxis: {{ title: "Primary Affinity &Delta;G (kcal/mol)", gridcolor: "#1e293b" }},
-        yaxis: {{ title: "Selectivity Margin &Delta;&Delta;G (kcal/mol)", gridcolor: "#1e293b" }},
+        xaxis: {{ title: "Primary Vina Score S_primary (kcal/mol equiv.)", gridcolor: "#1e293b" }},
+        yaxis: {{ title: "Score Differential &Delta;S_Vina", gridcolor: "#1e293b" }},
         shapes: [
           {{ type: "line", x0: -10.5, x1: -7, y0: -0.5, y1: -0.5, line: {{ color: "#22c55e", dash: "dash", width: 1.5 }} }},
           {{ type: "line", x0: -8.5, x1: -8.5, y0: -2.1, y1: 0.7, line: {{ color: "#38bdf8", dash: "dot", width: 1.5 }} }}
@@ -464,15 +474,16 @@ def build_static_site(out_dir="docs"):
     function renderFullTable() {{
       const tbody = document.querySelector("#fullScreenTable tbody");
       tbody.innerHTML = DATA.docking_results.map(r => {{
-        const isSel = r.ddG_selectivity <= -0.5;
+        const isSel = r.delta_S_vina <= -0.5;
         return `
           <tr>
             <td><strong>${{r.primary_target}}</strong></td>
             <td>${{r.ligand}}</td>
-            <td>${{r.dG_primary_kcal.toFixed(2)}}</td>
+            <td style="color:#94a3b8;">${{r.established_target || 'N/A'}}</td>
+            <td>${{r.score_primary_vina.toFixed(2)}}</td>
             <td>${{r.closest_offtarget}}</td>
-            <td>${{r.dG_closest_offtarget.toFixed(2)}}</td>
-            <td><span class="${{isSel ? 'pill-sel' : 'pill-non'}}">${{r.ddG_selectivity > 0 ? '+' : ''}}${{r.ddG_selectivity.toFixed(2)}}</span></td>
+            <td>${{r.score_closest_offtarget_vina.toFixed(2)}}</td>
+            <td><span class="${{isSel ? 'pill-sel' : 'pill-non'}}">${{r.delta_S_vina > 0 ? '+' : ''}}${{r.delta_S_vina.toFixed(2)}}</span></td>
             <td>${{r.MW}}</td>
             <td>${{r.cLogP}}</td>
             <td>${{r.TPSA}}</td>
