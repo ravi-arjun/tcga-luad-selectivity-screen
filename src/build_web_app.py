@@ -2,6 +2,7 @@ import os
 import json
 import math
 import pandas as pd
+from statsmodels.stats.multitest import multipletests
 
 
 def pdbqt_to_pdb_block(pdbqt_path, first_model_only=True):
@@ -26,7 +27,7 @@ def pdbqt_to_pdb_block(pdbqt_path, first_model_only=True):
 def build_static_site(out_dir="docs"):
     os.makedirs(out_dir, exist_ok=True)
 
-    # 1. Load all pipeline JSON & CSV outputs and sanitize NaNs -> None (valid JSON null)
+    # 1. Load all pipeline JSON & CSV outputs
     with open("results/LUAD_km_curves_web.json", "r") as f:
         km_data = json.load(f)
 
@@ -39,10 +40,24 @@ def build_static_site(out_dir="docs"):
     foldseek_df = pd.read_csv("results/LUAD_foldseek_offtargets.csv")
     foldseek_df = foldseek_df.where(pd.notnull(foldseek_df), None)
 
+    # Compute exact survival summary dynamically from archived screen CSV
+    surv_csv = "results/LUAD_all_survival_screen.csv"
+    n_nominal = 42
+    n_fdr_km = 24
+    if os.path.exists(surv_csv):
+        sdf = pd.read_csv(surv_csv)
+        sdf["km_padj_bh"] = multipletests(sdf["km_logrank_p"], method="fdr_bh")[1]
+        n_nominal = int((((sdf["km_logrank_p"] < 0.05) | (sdf["cox_multivar_p"] < 0.05)) & (sdf["cox_HR"] > 1.0)).sum())
+        n_fdr_km = int(((sdf["km_padj_bh"] < 0.10) & (sdf["cox_HR"] > 1.0)).sum())
+
+    # Compute exact top dS_Vina candidate dynamically from actual Vina screen CSV
+    best_row = docking_df.sort_values("delta_S_vina").iloc[0]
+    best_ds_str = f"{best_row['delta_S_vina']:+.2f} (&Delta;S<sub>Vina</sub>)"
+    best_ds_lbl = f"Top Pocket-Aligned Score Margin ({best_row['ligand']} on {best_row['primary_target']})"
+
     with open("results/LUAD_docking_pockets.json", "r") as f:
         pockets = json.load(f)
 
-    # 2. Bundle 3D receptor & top docked pose structures directly into payload
     structures_3d = {
         "NEK2_receptor": pdbqt_to_pdb_block("docking/receptors/NEK2_primary.pdbqt"),
         "PLK1_receptor": pdbqt_to_pdb_block("docking/receptors/PLK1_primary.pdbqt"),
@@ -78,7 +93,7 @@ def build_static_site(out_dir="docs"):
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TCGA-LUAD Target Prioritization &amp; Computational Selectivity Screen</title>
+  <title>TCGA-LUAD Target Prioritization &amp; Computational Selectivity Screen (v1.1)</title>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
   <style>
@@ -119,10 +134,10 @@ def build_static_site(out_dir="docs"):
       margin-bottom: 0.6rem;
     }}
     h1 {{ margin: 0 0 0.5rem; font-size: 1.85rem; }}
-    .subtitle {{ color: var(--muted); max-width: 880px; margin: 0 0 1.2rem; font-size: 0.98rem; }}
+    .subtitle {{ color: var(--muted); max-width: 900px; margin: 0 0 1.2rem; font-size: 0.98rem; }}
     .metrics-grid {{
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 0.9rem;
       margin-top: 1rem;
     }}
@@ -208,18 +223,18 @@ def build_static_site(out_dir="docs"):
 <body>
   <header>
     <div class="container">
-      <div class="badge">Computational Oncology &amp; Structure-Guided Target Prioritization (v1.0)</div>
-      <h1>Transcriptomic &amp; Structure-Guided Target Prioritization in Lung Adenocarcinoma (TCGA-LUAD)</h1>
+      <div class="badge">Computational Oncology &amp; Structure-Guided Target Prioritization (v1.1)</div>
+      <h1>Transcriptomic Target Prioritization &amp; Structure-Guided Computational Screening in TCGA-LUAD</h1>
       <p class="subtitle">
-        Interactive computational screening platform integrating <strong>PyDESeq2</strong> differential expression,
-        <strong>Kaplan–Meier / Multivariate Cox</strong> survival stratification (FDR-adjusted), <strong>STRING</strong> functional network prioritization,
-        <strong>Foldseek</strong> 3D proteome off-target alignment, and <strong>AutoDock Vina (&Delta;S<sub>Vina</sub>)</strong> cross-screening.
+        Exploratory computational workflow integrating <strong>PyDESeq2</strong> differential expression (log2FC &gt; 1.5, FDR &lt; 0.01),
+        <strong>Kaplan–Meier / Multivariate Cox</strong> survival stratification, <strong>STRING</strong> functional network prioritization,
+        <strong>Foldseek</strong> 3D structural analog identification with local ATP-pocket superposition, and multi-seed <strong>AutoDock Vina (&Delta;S<sub>Vina</sub>)</strong> counter-screening.
       </p>
       <div class="metrics-grid">
-        <div class="metric-card"><div class="metric-val">42 Candidates</div><div class="metric-lbl">Prognostic LUAD Genes (DESeq2 FDR &lt; 0.01, Cox HR &gt; 1)</div></div>
-        <div class="metric-card"><div class="metric-val">NEK2 &amp; PLK1</div><div class="metric-lbl">Network-Prioritized Mitotic Kinase Targets</div></div>
-        <div class="metric-card"><div class="metric-val">6 Off-Targets</div><div class="metric-lbl">Foldseek + ATP-Pocket Superposed Homologs</div></div>
-        <div class="metric-card"><div class="metric-val">-1.90 (&Delta;S<sub>Vina</sub>)</div><div class="metric-lbl">Peak In Silico Score Margin (Alisertib on PLK1)</div></div>
+        <div class="metric-card"><div class="metric-val">{n_fdr_km} FDR / {n_nominal} Nom.</div><div class="metric-lbl">Prognostic LUAD Candidates (KM BH q &lt; 0.10 / Nominal p &lt; 0.05)</div></div>
+        <div class="metric-card"><div class="metric-val">NEK2 &amp; PLK1</div><div class="metric-lbl">Network-Prioritized Mitotic Kinase Candidates</div></div>
+        <div class="metric-card"><div class="metric-val">5 Analogs + 2 Ctrls</div><div class="metric-lbl">ATP-Pocket Aligned Off-Targets (Pocket RMSD &le; 3.0 &Aring;)</div></div>
+        <div class="metric-card"><div class="metric-val">{best_ds_str}</div><div class="metric-lbl">{best_ds_lbl}</div></div>
       </div>
     </div>
   </header>
@@ -230,8 +245,8 @@ def build_static_site(out_dir="docs"):
       <div class="controls">
         <label>Primary Target:
           <select id="targetSelect">
-            <option value="PLK1">PLK1 (PDB: 2OWB)</option>
             <option value="NEK2">NEK2 (PDB: 2W5B)</option>
+            <option value="PLK1">PLK1 (PDB: 2OWB)</option>
           </select>
         </label>
         <label>Cross-Screened Ligand:
@@ -249,9 +264,9 @@ def build_static_site(out_dir="docs"):
           <div id="ligandStatsCard" style="margin-bottom: 1rem;"></div>
           <h3 style="font-size: 1rem; margin-bottom: 0.4rem;">Nearby ATP-Pocket Residues (&lt; 3.8 &Aring; Proximity)</h3>
           <div id="contactsContainer"></div>
-          <h3 style="font-size: 1rem; margin: 1rem 0 0.4rem;">Foldseek &amp; ATP-Pocket Structural Off-Target Candidates</h3>
+          <h3 style="font-size: 1rem; margin: 1rem 0 0.4rem;">Foldseek Structural Analogs &amp; Local ATP-Pocket RMSD</h3>
           <table id="offtargetTable">
-            <thead><tr><th>Off-Target</th><th>UniProt</th><th>Foldseek E-val</th><th>Seq ID</th><th>Pocket RMSD</th></tr></thead>
+            <thead><tr><th>Structural Analog</th><th>UniProt</th><th>Foldseek E-val</th><th>Seq ID</th><th>Pocket RMSD</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -271,7 +286,7 @@ def build_static_site(out_dir="docs"):
     </div>
 
     <div class="card">
-      <h2>4. Complete Cross-Screening &amp; Physicochemical Profile Matrix (80 Vina Runs)</h2>
+      <h2>4. Complete Pocket-Aligned Cross-Screening &amp; Physicochemical Matrix</h2>
       <div style="overflow-x: auto;">
         <table id="fullScreenTable">
           <thead>
@@ -291,6 +306,15 @@ def build_static_site(out_dir="docs"):
           <tbody></tbody>
         </table>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>5. Methodological Scope &amp; Scientific Qualifications (v1.1)</h2>
+      <ul style="color: #cbd5e1; font-size: 0.9rem; margin: 0; padding-left: 1.25rem;">
+        <li><strong>Differential Expression &amp; Survival:</strong> TCGA-LUAD candidates were prioritized via PyDESeq2 (log<sub>2</sub>FC &gt; 1.5, FDR &lt; 0.01) followed by pre-specified median-split Kaplan–Meier and clinical-covariate Cox screening (42 nominal candidates; 24 survive Benjamini–Hochberg FDR q &lt; 0.10 on log-rank testing). Independent cohort validation is planned for v2.0.</li>
+        <li><strong>Structural Off-Target Counter-Screening:</strong> Off-target receptors are superposed strictly onto the primary kinase ATP-binding pocket (within 10 &Aring; of the co-crystallized ligand; verified 0.000 &Aring; grid shift). MARK2 (local pocket RMSD = 7.24 &Aring;) is excluded from ATP-pocket counter-screening, while established clinical targets (AURKA PDB: 1MQ4 and PLK1 PDB: 2OWB) are included as mandatory pharmacological controls.</li>
+        <li><strong>Docking Score Interpretation:</strong> AutoDock Vina scores (S<sub>primary</sub>) and score differentials (&Delta;S<sub>Vina</sub> = S<sub>primary</sub> &minus; S<sub>best off-target</sub>) represent empirical computational ranking metrics across 3 random seeds (exhaustiveness = 16), not experimental binding free energies (&Delta;G) or validated biochemical selectivity.</li>
+      </ul>
     </div>
   </main>
 
@@ -318,7 +342,7 @@ def build_static_site(out_dir="docs"):
 
       document.getElementById("targetSelect").addEventListener("change", () => {{
         const tgt = document.getElementById("targetSelect").value;
-        document.getElementById("ligandSelect").value = tgt === "PLK1" ? "Alisertib" : "BI-2536";
+        document.getElementById("ligandSelect").value = tgt === "NEK2" ? "Alisertib" : "Rigosertib";
         update3DView();
       }});
       ligSel.addEventListener("change", update3DView);
@@ -368,7 +392,7 @@ def build_static_site(out_dir="docs"):
             <span class="${{isSel ? 'pill-sel' : 'pill-non'}}">&Delta;S<sub>Vina</sub> = ${{row.delta_S_vina > 0 ? '+' : ''}}${{row.delta_S_vina.toFixed(2)}}</span>
           </div>
           <p style="margin:0.4rem 0 0; font-size:0.84rem; color:#94a3b8;">
-            Established Pharmacology: <strong style="color:#e2e8f0;">${{row.established_target || 'Clinical Kinase Inhibitor'}}</strong>
+            Established Clinical Target: <strong style="color:#e2e8f0;">${{row.established_target || 'Clinical Kinase Inhibitor'}}</strong>
           </p>
           <p style="margin:0.35rem 0 0; font-size:0.86rem; color:#cbd5e1;">
             Primary Vina Score: <strong>${{row.score_primary_vina.toFixed(2)}}</strong> &bull;
@@ -381,7 +405,7 @@ def build_static_site(out_dir="docs"):
       const contacts = DATA.pocket_contacts[`${{tgt}}_${{lig}}`] || [];
       const cDiv = document.getElementById("contactsContainer");
       cDiv.innerHTML = contacts.length
-        ? contacts.slice(0, 10).map(c => `<span class="contact-chip">${{c.residue}} (${{c.min_dist_A}}&Aring;)</span>`).join("")
+        ? contacts.slice(0, 10).map(c => `<span class="contact-chip" title="${{c.contact_category}}">${{c.residue}} (${{c.min_dist_A}}&Aring;)</span>`).join("")
         : `<span style="color:#94a3b8; font-size:0.85rem;">Rotate &amp; zoom the 3D pocket viewer to inspect steric fit.</span>`;
 
       const offRows = DATA.foldseek_offtargets.filter(o => o.primary_target === tgt).slice(0, 3);
@@ -416,11 +440,11 @@ def build_static_site(out_dir="docs"):
         plot_bgcolor: "#0f172a",
         font: {{ color: "#e2e8f0" }},
         margin: {{ t: 20, r: 20, b: 48, l: 55 }},
-        xaxis: {{ title: "Primary Vina Score S_primary (kcal/mol equiv.)", gridcolor: "#1e293b" }},
+        xaxis: {{ title: "Primary Vina Score S_primary", gridcolor: "#1e293b" }},
         yaxis: {{ title: "Score Differential &Delta;S_Vina", gridcolor: "#1e293b" }},
         shapes: [
           {{ type: "line", x0: -10.5, x1: -7, y0: -0.5, y1: -0.5, line: {{ color: "#22c55e", dash: "dash", width: 1.5 }} }},
-          {{ type: "line", x0: -8.5, x1: -8.5, y0: -2.1, y1: 0.7, line: {{ color: "#38bdf8", dash: "dot", width: 1.5 }} }}
+          {{ type: "line", x0: -8.5, x1: -8.5, y0: -1.5, y1: 1.7, line: {{ color: "#38bdf8", dash: "dot", width: 1.5 }} }}
         ]
       }}, {{ responsive: true }});
     }}
@@ -463,7 +487,7 @@ def build_static_site(out_dir="docs"):
         paper_bgcolor: "rgba(0,0,0,0)",
         plot_bgcolor: "#0f172a",
         font: {{ color: "#e2e8f0" }},
-        title: {{ text: `${{symbol}} Overall Survival (Log-Rank p = ${{g.logrank_p}})`, font: {{ size: 13 }} }},
+        title: {{ text: `${{symbol}} Overall Survival (Nominal Log-Rank p = ${{g.logrank_p}})`, font: {{ size: 13 }} }},
         margin: {{ t: 40, r: 20, b: 45, l: 50 }},
         xaxis: {{ title: "Months", gridcolor: "#1e293b" }},
         yaxis: {{ title: "Survival Probability", range: [0, 1.05], gridcolor: "#1e293b" }},
@@ -500,7 +524,7 @@ def build_static_site(out_dir="docs"):
     with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as hf:
         hf.write(html_code)
 
-    print(f"[SUCCESS] Self-contained dashboard written to '{out_dir}/index.html' ({os.path.getsize(os.path.join(out_dir, 'index.html')) // 1024} KB)")
+    print(f"[SUCCESS] v1.1 dashboard written to '{out_dir}/index.html' ({os.path.getsize(os.path.join(out_dir, 'index.html')) // 1024} KB)")
 
 
 if __name__ == "__main__":

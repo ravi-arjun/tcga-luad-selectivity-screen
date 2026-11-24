@@ -1,21 +1,21 @@
-primary_target,ligand,established_target,clinical_status,score_primary_vina,closest_offtarget,score_closest_offtarget_vina,delta_S_vina,MW,cLogP,TPSA,pose_file,score_NEK4_vina,score_NEK8_vina,score_NEK7_vina,score_RPS6KB1_vina,score_MARK2_vina,score_PHKG2_vina
-NEK2,Sunitinib,VEGFR2 / PDGFRB / KIT multi-RTK,FDA-approved,-8.536,NEK4,-7.639,-0.897,398.48,3.33,77.23,docking/poses/NEK2_Sunitinib_pose.pdbqt,-7.639,-7.606,-7.574,,,
-NEK2,Hesperadin,AURKB (Aurora B kinase),Preclinical mitotic tool compound,-8.807,NEK7,-8.594,-0.213,558.7,3.97,98.82,docking/poses/NEK2_Hesperadin_pose.pdbqt,-7.899,-7.925,-8.594,,,
-NEK2,Dasatinib,ABL1 / SRC family kinases,FDA-approved,-9.252,NEK7,-9.103,-0.149,488.02,3.31,106.51,docking/poses/NEK2_Dasatinib_pose.pdbqt,-8.338,-8.143,-9.103,,,
-NEK2,Rigosertib,PLK1 / RAS-PI3K pathway modulator,Phase III,-7.314,NEK4,-7.217,-0.097,451.5,2.8,120.39,docking/poses/NEK2_Rigosertib_pose.pdbqt,-7.217,-6.635,-6.967,,,
-NEK2,Erlotinib,EGFR (ErbB1 receptor tyrosine kinase),FDA-approved (NSCLC),-7.418,NEK4,-7.477,0.059,393.44,3.41,74.73,docking/poses/NEK2_Erlotinib_pose.pdbqt,-7.477,-6.361,-6.702,,,
-NEK2,Tofacitinib,JAK1 / JAK3 (Janus kinases),FDA-approved,-7.242,NEK4,-7.337,0.095,312.38,1.54,88.91,docking/poses/NEK2_Tofacitinib_pose.pdbqt,-7.337,-6.741,-6.972,,,
-NEK2,Volasertib,PLK1 (Polo-like kinase 1),Phase III (mitotic kinase inhibitor),-7.796,NEK7,-7.896,0.1,620.84,4.51,106.17,docking/poses/NEK2_Volasertib_pose.pdbqt,-4.453,-7.557,-7.896,,,
-NEK2,Barasertib,AURKB (Aurora B kinase),Phase II/III,-7.144,NEK4,-7.352,0.208,565.72,3.04,115.32,docking/poses/NEK2_Barasertib_pose.pdbqt,-7.352,-7.005,-7.347,,,
-NEK2,Alisertib,AURKA (Aurora A kinase),Phase III (mitotic kinase inhibitor),-8.827,NEK7,-9.284,0.457,518.93,5.75,105.93,docking/poses/NEK2_Alisertib_pose.pdbqt,-8.624,-8.714,-9.284,,,
-NEK2,BI-2536,PLK1 (Polo-like kinase 1; secondary PLK2/PLK3),Phase II (mitotic kinase inhibitor),-9.154,NEK4,-9.759,0.605,521.67,3.56,102.93,docking/poses/NEK2_BI-2536_pose.pdbqt,-9.759,-7.947,-8.371,,,
-PLK1,Alisertib,AURKA (Aurora A kinase),Phase III (mitotic kinase inhibitor),-10.01,MARK2,-9.172,-0.838,518.93,5.75,105.93,docking/poses/PLK1_Alisertib_pose.pdbqt,,,,-8.394,-9.172,-8.445
-PLK1,Barasertib,AURKB (Aurora B kinase),Phase II/III,-8.036,MARK2,-7.41,-0.626,565.72,3.04,115.32,docking/poses/PLK1_Barasertib_pose.pdbqt,,,,-6.267,-7.41,-7.176
-PLK1,Dasatinib,ABL1 / SRC family kinases,FDA-approved,-9.097,PHKG2,-8.753,-0.344,488.02,3.31,106.51,docking/poses/PLK1_Dasatinib_pose.pdbqt,,,,-7.956,-8.432,-8.753
-PLK1,Erlotinib,EGFR (ErbB1 receptor tyrosine kinase),FDA-approved (NSCLC),-8.033,PHKG2,-7.735,-0.298,393.44,3.41,74.73,docking/poses/PLK1_Erlotinib_pose.pdbqt,,,,-6.902,-7.21,-7.735
-PLK1,Sunitinib,VEGFR2 / PDGFRB / KIT multi-RTK,FDA-approved,-8.231,MARK2,-8.336,0.105,398.48,3.33,77.23,docking/poses/PLK1_Sunitinib_pose.pdbqt,,,,-7.693,-8.336,-7.963
-PLK1,BI-2536,PLK1 (Polo-like kinase 1; secondary PLK2/PLK3),Phase II (mitotic kinase inhibitor),-9.228,PHKG2,-9.336,0.108,521.67,3.56,102.93,docking/poses/PLK1_BI-2536_pose.pdbqt,,,,-7.56,-8.28,-9.336
-PLK1,Tofacitinib,JAK1 / JAK3 (Janus kinases),FDA-approved,-7.715,MARK2,-7.855,0.14,312.38,1.54,88.91,docking/poses/PLK1_Tofacitinib_pose.pdbqt,,,,-7.362,-7.855,-7.678
-PLK1,Rigosertib,PLK1 / RAS-PI3K pathway modulator,Phase III,-7.388,MARK2,-7.542,0.154,451.5,2.8,120.39,docking/poses/PLK1_Rigosertib_pose.pdbqt,,,,-6.567,-7.542,-7.154
-PLK1,Hesperadin,AURKB (Aurora B kinase),Preclinical mitotic tool compound,-9.185,PHKG2,-9.884,0.699,558.7,3.97,98.82,docking/poses/PLK1_Hesperadin_pose.pdbqt,,,,-6.277,-9.009,-9.884
-PLK1,Volasertib,PLK1 (Polo-like kinase 1),Phase III (mitotic kinase inhibitor),-6.834,PHKG2,-8.743,1.909,620.84,4.51,106.17,docking/poses/PLK1_Volasertib_pose.pdbqt,,,,4.297,-2.346,-8.743
+primary_target,ligand,established_target,clinical_status,score_primary_vina,score_primary_sd,closest_offtarget,score_closest_offtarget_vina,delta_S_vina,MW,cLogP,TPSA,pose_file,score_NEK4_vina,score_NEK7_vina,score_NEK8_vina,score_PLK1_CTRL_vina,score_PHKG2_vina,score_RPS6KB1_vina,score_AURKA_CTRL_vina
+NEK2,Alisertib,AURKA,Phase III (Aurora A inhibitor),-10.093,0.019,NEK4,-9.335,-0.758,518.93,5.75,105.93,docking/poses/NEK2_Alisertib_pose.pdbqt,-9.335,-8.899,-8.442,-8.876,,,
+NEK2,Volasertib,PLK1,Phase III (PLK1 inhibitor),-8.79,0.017,NEK7,-8.194,-0.596,620.84,4.51,106.17,docking/poses/NEK2_Volasertib_pose.pdbqt,-6.49,-8.194,-7.196,-7.861,,,
+NEK2,BI-2536,PLK1,Phase II (PLK1/2/3 inhibitor),-9.606,0.036,PLK1_CTRL,-9.102,-0.504,521.67,3.56,102.93,docking/poses/NEK2_BI-2536_pose.pdbqt,-8.461,-8.527,-8.051,-9.102,,,
+NEK2,Tofacitinib,JAK1 / JAK3,FDA-approved,-8.296,0.018,NEK4,-7.836,-0.46,312.38,1.54,88.91,docking/poses/NEK2_Tofacitinib_pose.pdbqt,-7.836,-7.677,-7.187,-7.764,,,
+NEK2,Sunitinib,VEGFR2 / PDGFRB / KIT,FDA-approved,-8.791,0.028,PLK1_CTRL,-8.408,-0.383,398.48,3.33,77.23,docking/poses/NEK2_Sunitinib_pose.pdbqt,-8.219,-7.951,-7.286,-8.408,,,
+NEK2,Barasertib,AURKB,Phase II/III,-7.7,0.075,PLK1_CTRL,-7.75,0.05,565.72,3.04,115.32,docking/poses/NEK2_Barasertib_pose.pdbqt,-7.348,-7.519,-7.081,-7.75,,,
+NEK2,Dasatinib,ABL1 / SRC,FDA-approved,-9.126,0.031,PLK1_CTRL,-9.704,0.578,488.02,3.31,106.51,docking/poses/NEK2_Dasatinib_pose.pdbqt,-8.956,-9.006,-8.44,-9.704,,,
+NEK2,Rigosertib,PLK1 / RAS-PI3K,Phase III,-7.515,0.145,PLK1_CTRL,-8.454,0.939,451.5,2.8,120.39,docking/poses/NEK2_Rigosertib_pose.pdbqt,-7.223,-7.273,-6.989,-8.454,,,
+NEK2,Erlotinib,EGFR,FDA-approved (NSCLC),-7.961,0.091,NEK4,-8.919,0.958,393.44,3.41,74.73,docking/poses/NEK2_Erlotinib_pose.pdbqt,-8.919,-7.223,-6.94,-8.427,,,
+NEK2,Hesperadin,AURKB,Preclinical mitotic tool compound,-9.007,0.04,PLK1_CTRL,-10.523,1.516,558.7,3.97,98.82,docking/poses/NEK2_Hesperadin_pose.pdbqt,-8.499,-8.472,-8.262,-10.523,,,
+PLK1,Rigosertib,PLK1 / RAS-PI3K,Phase III,-8.451,0.05,AURKA_CTRL,-7.639,-0.812,451.5,2.8,120.39,docking/poses/PLK1_Rigosertib_pose.pdbqt,,,,,-7.476,-7.103,-7.639
+PLK1,Alisertib,AURKA,Phase III (Aurora A inhibitor),-9.055,0.013,PHKG2,-8.767,-0.288,518.93,5.75,105.93,docking/poses/PLK1_Alisertib_pose.pdbqt,,,,,-8.767,-8.384,-8.719
+PLK1,Erlotinib,EGFR,FDA-approved (NSCLC),-8.456,0.185,AURKA_CTRL,-8.189,-0.267,393.44,3.41,74.73,docking/poses/PLK1_Erlotinib_pose.pdbqt,,,,,-7.956,-6.968,-8.189
+PLK1,Barasertib,AURKB,Phase II/III,-8.086,0.315,AURKA_CTRL,-8.043,-0.043,565.72,3.04,115.32,docking/poses/PLK1_Barasertib_pose.pdbqt,,,,,-7.684,-6.419,-8.043
+PLK1,Sunitinib,VEGFR2 / PDGFRB / KIT,FDA-approved,-8.587,0.121,AURKA_CTRL,-8.644,0.057,398.48,3.33,77.23,docking/poses/PLK1_Sunitinib_pose.pdbqt,,,,,-8.406,-7.746,-8.644
+PLK1,Dasatinib,ABL1 / SRC,FDA-approved,-9.211,0.036,AURKA_CTRL,-9.302,0.091,488.02,3.31,106.51,docking/poses/PLK1_Dasatinib_pose.pdbqt,,,,,-8.626,-8.336,-9.302
+PLK1,BI-2536,PLK1,Phase II (PLK1/2/3 inhibitor),-9.237,0.019,PHKG2,-9.558,0.321,521.67,3.56,102.93,docking/poses/PLK1_BI-2536_pose.pdbqt,,,,,-9.558,-7.536,-8.556
+PLK1,Tofacitinib,JAK1 / JAK3,FDA-approved,-7.756,0.06,AURKA_CTRL,-8.467,0.711,312.38,1.54,88.91,docking/poses/PLK1_Tofacitinib_pose.pdbqt,,,,,-7.946,-7.423,-8.467
+PLK1,Volasertib,PLK1,Phase III (PLK1 inhibitor),-7.992,0.293,PHKG2,-8.73,0.738,620.84,4.51,106.17,docking/poses/PLK1_Volasertib_pose.pdbqt,,,,,-8.73,-2.589,-7.693
+PLK1,Hesperadin,AURKB,Preclinical mitotic tool compound,-8.58,0.006,PHKG2,-9.371,0.791,558.7,3.97,98.82,docking/poses/PLK1_Hesperadin_pose.pdbqt,,,,,-9.371,-7.447,-8.752

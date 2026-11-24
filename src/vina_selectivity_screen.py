@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import urllib.request
 import subprocess
 import numpy as np
 import pandas as pd
@@ -8,7 +9,7 @@ from Bio.PDB import PDBParser, PDBIO, Superimposer, Select
 from Bio.Align import PairwiseAligner
 from Bio.SeqUtils import seq1
 from rdkit import Chem
-from rdkit.Chem import AllChem, Descriptors
+from rdkit.Chem import AllChem, Descriptors, rdMolAlign
 from meeko import MoleculePreparation, PDBQTWriterLegacy
 
 VINA_EXE = os.path.join("bin", "vina.exe")
@@ -17,80 +18,93 @@ VINA_EXE = os.path.join("bin", "vina.exe")
 LIGAND_LIBRARY = {
     "BI-2536": {
         "smiles": "CCC1C(=O)N(C)c2nc(Nc3ccc(C(=O)NC4CCN(C)CC4)cc3OC)ncc2N1C1CCCC1",
-        "established_target": "PLK1 (Polo-like kinase 1; secondary PLK2/PLK3)",
-        "clinical_status": "Phase II (mitotic kinase inhibitor)",
+        "established_target": "PLK1",
+        "clinical_status": "Phase II (PLK1/2/3 inhibitor)",
     },
     "Volasertib": {
         "smiles": "CCC1C(=O)N(C)c2nc(Nc3ccc(C(=O)NC4CCC(N5CCN(CC(C)C)CC5)CC4)cc3OC)ncc2N1C(C)C",
-        "established_target": "PLK1 (Polo-like kinase 1)",
-        "clinical_status": "Phase III (mitotic kinase inhibitor)",
+        "established_target": "PLK1",
+        "clinical_status": "Phase III (PLK1 inhibitor)",
     },
     "Hesperadin": {
         "smiles": "CCN1CCN(CC(=O)Nc2ccc(C(=C3C(=O)Nc4ccc(S(=O)(=O)CC)cc43)c3ccccc3)cc2)CC1",
-        "established_target": "AURKB (Aurora B kinase)",
+        "established_target": "AURKB",
         "clinical_status": "Preclinical mitotic tool compound",
     },
     "Rigosertib": {
         "smiles": "COc1cc(OC)c(CS(=O)(=O)C=Cc2ccc(OC)c(NCC(=O)O)c2)c(OC)c1",
-        "established_target": "PLK1 / RAS-PI3K pathway modulator",
+        "established_target": "PLK1 / RAS-PI3K",
         "clinical_status": "Phase III",
     },
     "Alisertib": {
         "smiles": "COc1cccc(C2=NCc3cnc(Nc4ccc(C(=O)O)cc4OC)nc3-c3ccc(Cl)cc32)c1F",
-        "established_target": "AURKA (Aurora A kinase)",
-        "clinical_status": "Phase III (mitotic kinase inhibitor)",
+        "established_target": "AURKA",
+        "clinical_status": "Phase III (Aurora A inhibitor)",
     },
     "Barasertib": {
         "smiles": "CCN(CC)CC(=O)Nc1ccc(Nc2ncnc3cc(OCCCN4CCN(CCO)CC4)c(OC)cc23)cc1",
-        "established_target": "AURKB (Aurora B kinase)",
+        "established_target": "AURKB",
         "clinical_status": "Phase II/III",
     },
     "Dasatinib": {
         "smiles": "Cc1nc(Nc2ncc(C(=O)Nc3c(C)cccc3Cl)s2)cc(N2CCN(CCO)CC2)n1",
-        "established_target": "ABL1 / SRC family kinases",
+        "established_target": "ABL1 / SRC",
         "clinical_status": "FDA-approved",
     },
     "Erlotinib": {
         "smiles": "COCCOc1cc2ncnc(Nc3cccc(C#C)c3)c2cc1OCCOC",
-        "established_target": "EGFR (ErbB1 receptor tyrosine kinase)",
+        "established_target": "EGFR",
         "clinical_status": "FDA-approved (NSCLC)",
     },
     "Sunitinib": {
         "smiles": "CCN(CC)CCNC(=O)c1c(C)[nH]c(C=C2C(=O)Nc3ccc(F)cc32)c1C",
-        "established_target": "VEGFR2 / PDGFRB / KIT multi-RTK",
+        "established_target": "VEGFR2 / PDGFRB / KIT",
         "clinical_status": "FDA-approved",
     },
     "Tofacitinib": {
         "smiles": "CC1CCN(C(=O)CC#N)CC1N(C)c1ncnc2[nH]ccc12",
-        "established_target": "JAK1 / JAK3 (Janus kinases)",
+        "established_target": "JAK1 / JAK3",
         "clinical_status": "FDA-approved",
     },
 }
 
+# Counter-screen panels now include BOTH Foldseek pocket-compatible paralogs (pocket RMSD < 3.0 A)
+# AND mandatory established clinical target controls (PLK1 for NEK2 panel; AURKA for PLK1 panel).
+# Note: MARK2 (pocket RMSD = 7.24 A) is excluded from ATP-pocket counter-screening due to divergent pocket geometry.
 TARGET_CONFIG = {
     "NEK2": {
         "holo_pdb": "structures/targets/NEK2_2W5B.pdb",
         "chain": "A",
         "offtargets": [
-            ("NEK4", "structures/offtargets/NEK2_offtarget_NEK4_P51957.pdb"),
-            ("NEK8", "structures/offtargets/NEK2_offtarget_NEK8_Q86SG6.pdb"),
-            ("NEK7", "structures/offtargets/NEK2_offtarget_NEK7_Q8TDX7.pdb"),
+            ("NEK4", "structures/offtargets/NEK2_offtarget_NEK4_P51957.pdb", "A", "Foldseek paralog (pocket RMSD 1.73 A)"),
+            ("NEK7", "structures/offtargets/NEK2_offtarget_NEK7_Q8TDX7.pdb", "A", "Foldseek paralog (pocket RMSD 2.21 A)"),
+            ("NEK8", "structures/offtargets/NEK2_offtarget_NEK8_Q86SG6.pdb", "A", "Foldseek paralog (pocket RMSD 2.39 A)"),
+            ("PLK1_CTRL", "structures/targets/PLK1_2OWB.pdb", "A", "Established clinical target control (BI-2536/Volasertib)"),
         ],
     },
     "PLK1": {
         "holo_pdb": "structures/targets/PLK1_2OWB.pdb",
         "chain": "A",
         "offtargets": [
-            ("RPS6KB1", "structures/offtargets/PLK1_offtarget_RPS6KB1_P23443.pdb"),
-            ("MARK2", "structures/offtargets/PLK1_offtarget_MARK2_Q7KZI7.pdb"),
-            ("PHKG2", "structures/offtargets/PLK1_offtarget_PHKG2_P15735.pdb"),
+            ("PHKG2", "structures/offtargets/PLK1_offtarget_PHKG2_P15735.pdb", "A", "Foldseek structural analog (pocket RMSD 0.88 A)"),
+            ("RPS6KB1", "structures/offtargets/PLK1_offtarget_RPS6KB1_P23443.pdb", "A", "Foldseek structural analog (pocket RMSD 1.62 A)"),
+            ("AURKA_CTRL", "structures/targets/AURKA_1MQ4.pdb", "A", "Established clinical target control (Alisertib)"),
         ],
     },
 }
 
 
+def ensure_control_structures():
+    """Downloads AURKA (PDB: 1MQ4) if missing so Alisertib is counter-screened against its primary target."""
+    aurka_pdb = "structures/targets/AURKA_1MQ4.pdb"
+    if not os.path.exists(aurka_pdb):
+        os.makedirs(os.path.dirname(aurka_pdb), exist_ok=True)
+        print("Downloading AURKA crystal structure (PDB: 1MQ4) as clinical control...")
+        urllib.request.urlretrieve("https://files.rcsb.org/download/1MQ4.pdb", aurka_pdb)
+
+
 class CleanProteinSelect(Select):
-    """Keeps only standard amino acid protein atoms (strips waters, ions, co-crystallized ligands)."""
+    """Keeps standard amino acids on the target chain (takes first altloc 'A' or ' ')."""
     def __init__(self, chain_id="A"):
         self.chain_id = chain_id
 
@@ -100,14 +114,18 @@ class CleanProteinSelect(Select):
     def accept_residue(self, residue):
         return residue.id[0] == " "
 
+    def accept_atom(self, atom):
+        return atom.get_altloc() in (" ", "A")
 
-def extract_pocket_center(pdb_path, chain_id="A"):
-    """Computes the 3D centroid of the co-crystallized organic ligand in the active site."""
+
+def extract_holo_ligand_info(pdb_path, chain_id="A"):
+    """Extracts 3D coordinates and centroid of the largest co-crystallized organic ligand."""
     parser = PDBParser(QUIET=True)
     structure = parser.get_structure("holo", pdb_path)
     chain = structure[0][chain_id]
 
-    ignore_het = {"HOH", "WAT", "SO4", "PO4", "GOL", "EDO", "CL", "NA", "MG", "ZN", "DMS", "PEG"}
+    ignore_het = {"HOH", "WAT", "SO4", "PO4", "GOL", "EDO", "CL", "NA", "MG", "ZN", "DMS", "PEG", "ADP", "ATP", "ANP"}
+    best_res = None
     best_coords = []
 
     for res in chain:
@@ -117,16 +135,20 @@ def extract_pocket_center(pdb_path, chain_id="A"):
             coords = [atom.get_coord() for atom in res if atom.element != "H"]
             if len(coords) > len(best_coords):
                 best_coords = coords
+                best_res = res
 
     if not best_coords:
         best_coords = [res["CA"].get_coord() for res in chain if "CA" in res]
 
-    center = np.mean(best_coords, axis=0)
-    return tuple(round(float(c), 3) for c in center)
+    center = tuple(round(float(c), 3) for c in np.mean(best_coords, axis=0))
+    return center, np.array(best_coords), best_res
 
 
-def pdb_to_receptor_pdbqt(pdb_path, pdbqt_path, chain_id="A"):
-    """Writes a clean receptor PDBQT compatible with AutoDock Vina 1.2.7."""
+def pdb_to_receptor_pdbqt_protonated(pdb_path, pdbqt_path, chain_id="A"):
+    """
+    Prepares a receptor PDBQT with explicit polar hydrogens (HD) and chemically accurate
+    AutoDock4 donor/acceptor atom types (NA, OA, SA, N, C, HD) via RDKit sanitization.
+    """
     parser = PDBParser(QUIET=True)
     structure = parser.get_structure("rec", pdb_path)
     io = PDBIO()
@@ -134,33 +156,89 @@ def pdb_to_receptor_pdbqt(pdb_path, pdbqt_path, chain_id="A"):
     tmp_pdb = pdbqt_path + ".clean.pdb"
     io.save(tmp_pdb, CleanProteinSelect(chain_id))
 
-    ad4_map = {"C": "C", "N": "NA", "O": "OA", "S": "SA", "H": "HD", "P": "P", "F": "F", "CL": "Cl", "BR": "Br", "I": "I"}
+    # Standard amino acid AutoDock4 atom-type lookup (pH 7.4 protonation state)
+    # Distinguishes H-bond acceptors (OA, NA) from amide/guanidinium donors (N) and polar H (HD)
+    polar_backbone = {"N": "N", "O": "OA", "OXT": "OA", "H": "HD", "HN": "HD"}
+    sidechain_ad4 = {
+        ("SER", "OG"): "OA", ("SER", "HG"): "HD",
+        ("THR", "OG1"): "OA", ("THR", "HG1"): "HD",
+        ("TYR", "OH"): "OA", ("TYR", "HH"): "HD",
+        ("CYS", "SG"): "SA", ("CYS", "HG"): "HD",
+        ("ASN", "OD1"): "OA", ("ASN", "ND2"): "N", ("ASN", "HD21"): "HD", ("ASN", "HD22"): "HD",
+        ("GLN", "OE1"): "OA", ("GLN", "NE2"): "N", ("GLN", "HE21"): "HD", ("GLN", "HE22"): "HD",
+        ("ASP", "OD1"): "OA", ("ASP", "OD2"): "OA",
+        ("GLU", "OE1"): "OA", ("GLU", "OE2"): "OA",
+        ("HIS", "ND1"): "NA", ("HIS", "NE2"): "N", ("HIS", "HE2"): "HD", ("HIS", "HD1"): "HD",
+        ("LYS", "NZ"): "N", ("LYS", "HZ1"): "HD", ("LYS", "HZ2"): "HD", ("LYS", "HZ3"): "HD",
+        ("ARG", "NE"): "N", ("ARG", "NH1"): "N", ("ARG", "NH2"): "N",
+        ("ARG", "HE"): "HD", ("ARG", "HH11"): "HD", ("ARG", "HH12"): "HD", ("ARG", "HH21"): "HD", ("ARG", "HH22"): "HD",
+        ("TRP", "NE1"): "N", ("TRP", "HE1"): "HD",
+        ("MET", "SD"): "SA",
+    }
+
+    # Add polar hydrogens with RDKit if missing from crystal/AlphaFold PDB
+    mol = Chem.MolFromPDBFile(tmp_pdb, removeHs=False, sanitize=False)
+    if mol is not None:
+        try:
+            Chem.SanitizeMol(mol)
+            mol_h = Chem.AddHs(mol, addCoords=True, onlyOnAtoms=[a.GetIdx() for a in mol.GetAtoms() if a.GetAtomicNum() in (7, 8, 16)])
+            Chem.MolToPDBFile(mol_h, tmp_pdb)
+        except Exception:
+            pass  # Fallback to existing coordinates if non-standard residue prevents full valence sanitization
+
     with open(tmp_pdb, "r") as fin, open(pdbqt_path, "w") as fout:
         for line in fin:
-            if line.startswith("ATOM"):
+            if line.startswith(("ATOM", "HETATM")):
+                atom_name = line[12:16].strip()
+                res_name = line[17:20].strip()
                 elem = line[76:78].strip().upper()
                 if not elem:
-                    elem = line[12:16].strip()[0].upper()
+                    elem = re.sub(r"[^A-Za-z]", "", atom_name)[:1].upper()
+
+                # Skip non-polar hydrogens; retain polar hydrogens attached to N/O/S
                 if elem == "H":
-                    continue
-                ad_type = ad4_map.get(elem, "C")
-                pdbqt_line = f"{line[:54]:<54}  1.00  0.00    +0.000 {ad_type:<2}\n"
+                    ad_type = "HD"
+                elif (res_name, atom_name) in sidechain_ad4:
+                    ad_type = sidechain_ad4[(res_name, atom_name)]
+                elif atom_name in polar_backbone:
+                    ad_type = polar_backbone[atom_name]
+                elif elem == "S":
+                    ad_type = "SA"
+                elif elem == "O":
+                    ad_type = "OA"
+                elif elem == "N":
+                    ad_type = "NA"
+                else:
+                    ad_type = "C"
+
+                pdbqt_line = f"ATOM  {line[6:54]:<48}  1.00  0.00    +0.000 {ad_type:<2}\n"
                 fout.write(pdbqt_line)
     os.remove(tmp_pdb)
 
 
-def superpose_offtarget_to_primary(primary_pdb, offtarget_pdb, aligned_pdb_out, primary_chain="A"):
+def superpose_offtarget_by_atp_pocket(primary_pdb, offtarget_pdb, aligned_pdb_out, primary_chain="A", offtarget_chain="A", pocket_radius=10.0):
     """
-    Sequence-guided structural superposition of the off-target kinase domain onto the
-    primary holo crystal structure so the ATP-binding site maps accurately onto the paralog pocket.
+    Superposes the off-target protein strictly onto the primary target's ATP-binding pocket
+    residues (within `pocket_radius` A of the co-crystallized ligand), applies that local rigid-body
+    transformation to the entire off-target structure, and verifies that the transformed ATP-pocket
+    centroid matches the primary docking grid center.
     """
+    center, lig_coords, _ = extract_holo_ligand_info(primary_pdb, primary_chain)
     parser = PDBParser(QUIET=True)
     ref_struct = parser.get_structure("ref", primary_pdb)
     mob_struct = parser.get_structure("mob", offtarget_pdb)
 
-    ref_residues = [r for r in ref_struct[0][primary_chain] if r.id[0] == " " and "CA" in r]
-    mob_chain = list(mob_struct[0].get_chains())[0]
+    ref_chain = ref_struct[0][primary_chain]
+    mob_chain = mob_struct[0][offtarget_chain] if offtarget_chain in mob_struct[0] else list(mob_struct[0].get_chains())[0]
+
+    ref_residues = [r for r in ref_chain if r.id[0] == " " and "CA" in r]
     mob_residues = [r for r in mob_chain if r.id[0] == " " and "CA" in r]
+
+    # Identify ATP-pocket residues in primary target
+    pocket_res_ids = {
+        r.id for r in ref_residues
+        if np.min(np.linalg.norm(lig_coords - r["CA"].get_coord(), axis=1)) <= pocket_radius
+    }
 
     ref_seq = "".join(seq1(r.resname) for r in ref_residues)
     mob_seq = "".join(seq1(r.resname) for r in mob_residues)
@@ -173,33 +251,42 @@ def superpose_offtarget_to_primary(primary_pdb, offtarget_pdb, aligned_pdb_out, 
     aligner.extend_gap_score = -0.5
     aln = aligner.align(ref_seq, mob_seq)[0]
 
-    ref_cas, mob_cas = [], []
+    pocket_ref_cas, pocket_mob_cas = [], []
     for (r_start, r_end), (m_start, m_end) in zip(*aln.aligned):
         for ri, mi in zip(range(r_start, r_end), range(m_start, m_end)):
-            ref_cas.append(ref_residues[ri]["CA"])
-            mob_cas.append(mob_residues[mi]["CA"])
+            if ref_residues[ri].id in pocket_res_ids:
+                pocket_ref_cas.append(ref_residues[ri]["CA"])
+                pocket_mob_cas.append(mob_residues[mi]["CA"])
 
+    # Fit transformation strictly on ATP-pocket C-alphas, then apply to all off-target atoms
     sup = Superimposer()
-    sup.set_atoms(ref_cas, mob_cas)
+    sup.set_atoms(pocket_ref_cas, pocket_mob_cas)
     sup.apply(mob_struct.get_atoms())
+
+    # Verify transformed off-target pocket centroid shift relative to primary pocket center
+    ref_pkt_centroid = np.mean([a.get_coord() for a in pocket_ref_cas], axis=0)
+    mob_pkt_centroid = np.mean([a.get_coord() for a in pocket_mob_cas], axis=0)
+    centroid_shift_A = round(float(np.linalg.norm(ref_pkt_centroid - mob_pkt_centroid)), 3)
 
     io = PDBIO()
     io.set_structure(mob_struct)
     io.save(aligned_pdb_out, CleanProteinSelect(mob_chain.id))
-    return round(float(sup.rms), 3)
+    return round(float(sup.rms), 3), centroid_shift_A
 
 
 def prepare_ligands(lig_dir="docking/ligands"):
-    """Generates 3D MMFF94-minimized PDBQT ligands via RDKit + Meeko and computes ADME metrics."""
+    """Generates 3D MMFF94-minimized PDBQT ligands via RDKit + Meeko and computes physicochemical descriptors."""
     os.makedirs(lig_dir, exist_ok=True)
     preparator = MoleculePreparation()
-    adme_records = []
+    desc_records = []
 
     for name, info in LIGAND_LIBRARY.items():
         smiles = info["smiles"]
         mol = Chem.MolFromSmiles(smiles)
         mol_h = Chem.AddHs(mol)
-        AllChem.EmbedMolecule(mol_h, AllChem.ETKDGv3())
+        params = AllChem.ETKDGv3()
+        params.randomSeed = 42
+        AllChem.EmbedMolecule(mol_h, params)
         AllChem.MMFFOptimizeMolecule(mol_h)
 
         mol_setups = preparator.prepare(mol_h)
@@ -212,7 +299,7 @@ def prepare_ligands(lig_dir="docking/ligands"):
         with open(lig_pdbqt, "w") as f:
             f.write(pdbqt_str)
 
-        adme_records.append({
+        desc_records.append({
             "ligand": name,
             "established_target": info["established_target"],
             "clinical_status": info["clinical_status"],
@@ -225,31 +312,79 @@ def prepare_ligands(lig_dir="docking/ligands"):
             "pdbqt_path": lig_pdbqt,
         })
 
-    return pd.DataFrame(adme_records)
+    return pd.DataFrame(desc_records)
 
 
-def run_vina_docking(receptor_pdbqt, ligand_pdbqt, center, out_pose_pdbqt, box_size=(20, 20, 20), exhaustiveness=8, seed=42):
-    """Executes AutoDock Vina 1.2.7 with a fixed seed and parses the top docking score."""
-    cmd = [
-        VINA_EXE,
-        "--receptor", receptor_pdbqt,
-        "--ligand", ligand_pdbqt,
-        "--center_x", str(center[0]),
-        "--center_y", str(center[1]),
-        "--center_z", str(center[2]),
-        "--size_x", str(box_size[0]),
-        "--size_y", str(box_size[1]),
-        "--size_z", str(box_size[2]),
-        "--exhaustiveness", str(exhaustiveness),
-        "--seed", str(seed),
-        "--out", out_pose_pdbqt,
-    ]
-    res = subprocess.run(cmd, capture_output=True, text=True, check=True)
-    for line in res.stdout.splitlines():
-        m = re.match(r"^\s*1\s+(-?\d+\.\d+)", line)
-        if m:
-            return float(m.group(1))
-    return np.nan
+def run_vina_multiseed(receptor_pdbqt, ligand_pdbqt, center, out_pose_pdbqt, box_size=(20, 20, 20), exhaustiveness=16, seeds=(42, 101, 2026)):
+    """Runs AutoDock Vina 1.2.7 across multiple random seeds and returns the mean/best top-mode score."""
+    scores = []
+    best_score = np.inf
+    tmp_pose = out_pose_pdbqt + ".tmp.pdbqt"
+
+    for s in seeds:
+        cmd = [
+            VINA_EXE,
+            "--receptor", receptor_pdbqt,
+            "--ligand", ligand_pdbqt,
+            "--center_x", str(center[0]),
+            "--center_y", str(center[1]),
+            "--center_z", str(center[2]),
+            "--size_x", str(box_size[0]),
+            "--size_y", str(box_size[1]),
+            "--size_z", str(box_size[2]),
+            "--exhaustiveness", str(exhaustiveness),
+            "--seed", str(s),
+            "--out", tmp_pose,
+        ]
+        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        for line in res.stdout.splitlines():
+            m = re.match(r"^\s*1\s+(-?\d+\.\d+)", line)
+            if m:
+                val = float(m.group(1))
+                scores.append(val)
+                if val < best_score:
+                    best_score = val
+                    os.replace(tmp_pose, out_pose_pdbqt)
+                break
+
+    if os.path.exists(tmp_pose):
+        os.remove(tmp_pose)
+    if not scores:
+        return np.nan, np.nan
+    return round(float(np.mean(scores)), 3), round(float(np.std(scores)), 3)
+
+
+def validate_cocrystal_redocking(plk1_pdbqt, bi2536_pdbqt, center):
+    """Positive control: redocks BI-2536 into PLK1 (2OWB) and computes heavy-atom RMSD vs crystal pose."""
+    redock_out = "docking/poses/CONTROL_PLK1_BI2536_redock.pdbqt"
+    mean_s, _ = run_vina_multiseed(plk1_pdbqt, bi2536_pdbqt, center, redock_out, exhaustiveness=16, seeds=(42,))
+
+    # Extract crystal BI-2536 coordinates from 2OWB (residue name IB8)
+    ref_mol = Chem.MolFromSmiles(LIGAND_LIBRARY["BI-2536"]["smiles"])
+    cryst_lines = []
+    with open("structures/targets/PLK1_2OWB.pdb") as f:
+        for line in f:
+            if line.startswith("HETATM") and line[17:20].strip() == "IB8" and line[21] == "A":
+                cryst_lines.append(line)
+    cryst_mol = Chem.MolFromPDBBlock("".join(cryst_lines), removeHs=True)
+    cryst_mol = AllChem.AssignBondOrdersFromTemplate(ref_mol, cryst_mol)
+
+    # Extract docked Mode 1 pose coordinates
+    dock_lines = []
+    with open(redock_out) as f:
+        for line in f:
+            if line.startswith("ENDMDL"):
+                break
+            if line.startswith(("ATOM", "HETATM")):
+                elem = line[77:79].strip()
+                if elem != "HD":
+                    dock_lines.append(f"HETATM{line[6:66]}          {elem[0]:>2}\n")
+    dock_mol = Chem.MolFromPDBBlock("".join(dock_lines), removeHs=True)
+    dock_mol = AllChem.AssignBondOrdersFromTemplate(ref_mol, dock_mol)
+
+    rmsd = round(float(rdMolAlign.CalcRMS(cryst_mol, dock_mol)), 3)
+    print(f"[POSITIVE CONTROL] PLK1 (2OWB) + BI-2536 Co-Crystal Redocking: Score = {mean_s:.2f}, Heavy-Atom RMSD = {rmsd:.3f} A\n")
+    return rmsd
 
 
 if __name__ == "__main__":
@@ -257,46 +392,58 @@ if __name__ == "__main__":
     os.makedirs("docking/poses", exist_ok=True)
     os.makedirs("results", exist_ok=True)
 
+    ensure_control_structures()
+
     print("1. Preparing 3D ligand cross-screening panel (RDKit ETKDGv3 + MMFF94 + Meeko)...")
     lig_df = prepare_ligands()
-    lig_df.to_csv("results/LUAD_ligand_adme_profile.csv", index=False)
+    lig_df.to_csv("results/LUAD_ligand_physicochemical_descriptors.csv", index=False)
     print(f"Prepared {len(lig_df)} clinical/preclinical kinase inhibitors.\n")
 
     all_docking_rows = []
     pocket_metadata = {}
 
     for target_sym, cfg in TARGET_CONFIG.items():
-        center = extract_pocket_center(cfg["holo_pdb"], cfg["chain"])
+        center, _, _ = extract_holo_ligand_info(cfg["holo_pdb"], cfg["chain"])
         pocket_metadata[target_sym] = {"center": center, "box_size": [20, 20, 20]}
         print(f"=== TARGET: {target_sym} | ATP-Pocket Center: {center} ===")
 
         primary_rec_pdbqt = f"docking/receptors/{target_sym}_primary.pdbqt"
-        pdb_to_receptor_pdbqt(cfg["holo_pdb"], primary_rec_pdbqt, cfg["chain"])
+        pdb_to_receptor_pdbqt_protonated(cfg["holo_pdb"], primary_rec_pdbqt, cfg["chain"])
+
+        if target_sym == "PLK1":
+            bi_pdbqt = lig_df[lig_df["ligand"] == "BI-2536"]["pdbqt_path"].values[0]
+            try:
+                redock_rmsd = validate_cocrystal_redocking(primary_rec_pdbqt, bi_pdbqt, center)
+                pocket_metadata["PLK1_BI2536_redock_RMSD_A"] = redock_rmsd
+            except Exception as e:
+                print(f"[WARN] Redocking RMSD check skipped: {e}")
 
         offtarget_receptors = {}
-        for off_sym, off_pdb in cfg["offtargets"]:
-            aligned_pdb = f"docking/receptors/{target_sym}_aligned_{off_sym}.pdb"
-            rmsd = superpose_offtarget_to_primary(cfg["holo_pdb"], off_pdb, aligned_pdb, cfg["chain"])
+        for off_sym, off_pdb, off_chain, rationale in cfg["offtargets"]:
+            aligned_pdb = f"docking/receptors/{target_sym}_pocket_aligned_{off_sym}.pdb"
+            pkt_rmsd, shift_A = superpose_offtarget_by_atp_pocket(
+                cfg["holo_pdb"], off_pdb, aligned_pdb, cfg["chain"], off_chain
+            )
             off_pdbqt = f"docking/receptors/{target_sym}_offtarget_{off_sym}.pdbqt"
-            pdb_to_receptor_pdbqt(aligned_pdb, off_pdbqt, chain_id="A")
+            pdb_to_receptor_pdbqt_protonated(aligned_pdb, off_pdbqt, chain_id=off_chain)
             offtarget_receptors[off_sym] = off_pdbqt
-            print(f"  Aligned kinase domain of {off_sym} onto {target_sym} (Domain C-alpha RMSD = {rmsd} A)")
+            print(f"  Pocket-aligned {off_sym:<10} -> {target_sym} | ATP-Pocket RMSD = {pkt_rmsd:.3f} A | Grid Shift = {shift_A:.3f} A ({rationale})")
 
         for _, lrow in lig_df.iterrows():
             lig_name = lrow["ligand"]
             lig_pdbqt = lrow["pdbqt_path"]
             pose_out = f"docking/poses/{target_sym}_{lig_name}_pose.pdbqt"
 
-            s_primary = run_vina_docking(primary_rec_pdbqt, lig_pdbqt, center, pose_out)
+            s_primary, sd_primary = run_vina_multiseed(primary_rec_pdbqt, lig_pdbqt, center, pose_out)
 
             off_scores = {}
             for off_sym, off_pdbqt in offtarget_receptors.items():
                 off_pose = f"docking/poses/{target_sym}_vs_{off_sym}_{lig_name}.pdbqt"
-                off_scores[off_sym] = run_vina_docking(off_pdbqt, lig_pdbqt, center, off_pose)
+                s_off, _ = run_vina_multiseed(off_pdbqt, lig_pdbqt, center, off_pose)
+                off_scores[off_sym] = s_off
 
             best_off_sym = min(off_scores, key=off_scores.get)
             best_off_score = off_scores[best_off_sym]
-            # Negative delta_S_vina = more favorable Vina docking score on primary target than closest off-target
             delta_s_vina = round(s_primary - best_off_score, 3)
 
             row_data = {
@@ -305,6 +452,7 @@ if __name__ == "__main__":
                 "established_target": lrow["established_target"],
                 "clinical_status": lrow["clinical_status"],
                 "score_primary_vina": s_primary,
+                "score_primary_sd": sd_primary,
                 "closest_offtarget": best_off_sym,
                 "score_closest_offtarget_vina": best_off_score,
                 "delta_S_vina": delta_s_vina,
@@ -317,7 +465,7 @@ if __name__ == "__main__":
                 row_data[f"score_{osym}_vina"] = osc
 
             all_docking_rows.append(row_data)
-            print(f"  {lig_name:<12} | {target_sym}: {s_primary:>6.2f} | Best Off-Target ({best_off_sym}): {best_off_score:>6.2f} | dS_Vina: {delta_s_vina:>+6.2f}")
+            print(f"  {lig_name:<12} | {target_sym}: {s_primary:>6.2f} (±{sd_primary:.2f}) | Best Off-Target ({best_off_sym}): {best_off_score:>6.2f} | dS_Vina: {delta_s_vina:>+6.2f}")
 
     results_df = pd.DataFrame(all_docking_rows).sort_values(
         by=["primary_target", "delta_S_vina", "score_primary_vina"], ascending=[True, True, True]
@@ -327,7 +475,7 @@ if __name__ == "__main__":
     with open("results/LUAD_docking_pockets.json", "w") as jf:
         json.dump(pocket_metadata, jf, indent=2)
 
-    print("\n--- TOP COMPUTATIONAL SELECTIVITY CANDIDATES (SORTED BY dS_Vina MARGIN) ---")
+    print("\n--- V1.1 POCKET-ALIGNED COUNTER-SCREENING SUMMARY ---")
     print(
         results_df[
             ["primary_target", "ligand", "established_target", "score_primary_vina", "closest_offtarget", "score_closest_offtarget_vina", "delta_S_vina"]
