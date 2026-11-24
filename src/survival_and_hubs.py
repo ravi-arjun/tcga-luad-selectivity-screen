@@ -1,203 +1,144 @@
 import os
-import requests
+import glob
+import pickle
 import numpy as np
 import pandas as pd
-import networkx as nx
 from lifelines import CoxPHFitter
 from lifelines.statistics import logrank_test, proportional_hazard_test
 from statsmodels.stats.multitest import multipletests
 
 
-def load_clean_clinical(clinical_path):
-    """
-    Loads GDC clinical.tsv, replaces '--' sentinels, deduplicates multiple 
-    treatment rows per patient, and computes Overall Survival (OS) time & event.
-    """
-    clin = pd.read_csv(clinical_path, sep="\t", dtype=str)
-    clin.replace(["'--", "--", "not reported", "Not Reported", "unknown"], np.nan, inplace=True)
+def run_corrected_survival_screen(
+    cache_pkl="results/stage1_cache.pkl",
+    out_all_csv="results/LUAD_all_survival_screen.csv",
+    out_cand_csv="results/LUAD_prognostic_candidates.csv",
+):
+    with open(cache_pkl, "rb") as f:
+        cache = pickle.load(f)
 
-    # Convert numeric fields
-    clin["days_to_death"] = pd.to_numeric(clin["demographic.days_to_death"], errors="coerce")
-    clin["days_to_follow_up"] = pd.to_numeric(clin["diagnoses.days_to_last_follow_up"], errors="coerce")
-    clin["age"] = pd.to_numeric(clin["demographic.age_at_index"], errors="coerce")
+    de_df = cache["annotated_de"].copy()
+    expr_mat = cache["filtered_expression"].copy()
+    tumor_meta = cache["tcga_tumor"].copy()
 
-    # Deduplicate per patient (cases.submitter_id = TCGA-XX-XXXX)
-    agg_rules = {
-        "demographic.vital_status": "first",
-        "days_to_death": "max",
-        "days_to_follow_up": "max",
-        "age": "first",
-        "demographic.gender": "first",
-        "diagnoses.ajcc_pathologic_stage": "first",
-    }
-    patient_df = clin.groupby("cases.submitter_id", as_index=False).agg(agg_rules)
+    # Convert to log2(CPM + 1) if raw counts are stored
+    if float(expr_mat.max().max()) > 50:
+        expr_log = np.log2(expr_mat.div(expr_mat.sum(axis=0), axis=1) * 1e6 + 1.0)
+    else:
+        expr_log = expr_mat
 
-    # Define Event (1 = Dead, 0 = Alive/Censored) & Time (days)
-    patient_df["event"] = (patient_df["demographic.vital_status"] == "Dead").astype(int)
-    patient_df["time"] = np.where(
-        patient_df["event"] == 1,
-        patient_df["days_to_death"],
-        patient_df["days_to_follow_up"],
-    )
+    expr_log.index = expr_log.index.astype(str).str.split(".").str[0]
+    expr_log = expr_log[~expr_log.index.duplicated(keep="first")]
+    de_df["ensembl_id"] = de_df.index.astype(str).str.split(".").str[0]
 
-    # Simplify AJCC pathologic stage into Early (Stage I/II) vs Late (Stage III/IV) for Cox regression
-    def simplify_stage(s):
-        if pd.isna(s):
-            return np.nan
-        s = str(s).upper()
-        if "IV" in s or "III" in s:
-            return 1  # Advanced stage
-        if "I" in s or "II" in s:
-            return 0  # Early stage
-        return np.nan
+    # Map TCGA-XX-XXXX patient_id directly from tcga_tumor['tcga_id'] -> 'sample_id'
+    tumor_meta["patient_id"] = tumor_meta["tcga_id"].astype(str).str[:12]
+    tumor_meta = tumor_meta.drop_duplicates(subset=["patient_id"])
+    patient_to_sample = dict(zip(tumor_meta["patient_id"], tumor_meta["sample_id"]))
 
-    patient_df["advanced_stage"] = patient_df["diagnoses.ajcc_pathologic_stage"].apply(simplify_stage)
-    patient_df["is_male"] = (patient_df["demographic.gender"].str.lower() == "male").astype(int)
+    # Load dotted GDC clinical metadata
+    clin_files = glob.glob("**/clinical*.tsv", recursive=True)
+    raw_clin = pd.read_csv(clin_files[0], sep="\t", na_values=["'--", "not reported", "NA", ""])
+    raw_clin["_pid"] = raw_clin["cases.submitter_id"].astype(str).str[:12]
+    raw_clin = raw_clin[raw_clin["_pid"].str.startswith("TCGA-")].drop_duplicates(subset=["_pid"])
 
-    # Keep valid positive survival times
-    patient_df = patient_df[patient_df["time"] > 0].copy()
-    print(f"Cleaned unique clinical patients with valid OS data: {len(patient_df)}")
-    return patient_df
+    clin = pd.DataFrame()
+    clin["patient_id"] = raw_clin["_pid"]
+    days_death = pd.to_numeric(raw_clin["demographic.days_to_death"], errors="coerce")
+    days_fu = pd.to_numeric(raw_clin["diagnoses.days_to_last_follow_up"], errors="coerce")
+    clin["time"] = days_death.fillna(days_fu)
+    clin["event"] = (raw_clin["demographic.vital_status"].astype(str).str.lower() == "dead").astype(int)
+    clin["age"] = pd.to_numeric(raw_clin["demographic.age_at_index"], errors="coerce")
+    clin["is_male"] = (raw_clin["demographic.gender"].astype(str).str.lower() == "male").astype(int)
+    stage_str = raw_clin["diagnoses.ajcc_pathologic_stage"].astype(str)
+    clin["advanced_stage"] = stage_str.str.contains("III|IV", case=False, na=False).astype(int)
 
+    clin["sample_id"] = clin["patient_id"].map(patient_to_sample)
+    clin = clin.dropna(subset=["sample_id"]).copy()
 
-def run_survival_screen(expr_df, sample_meta, annotated_de, patient_df, top_n=100, output_dir="results"):
-    """
-    Screens top overexpressed genes via pre-specified median-split Kaplan-Meier Log-Rank test
-    and Multivariate Cox Proportional Hazards (adjusted for age, gender, tumor stage),
-    including Benjamini-Hochberg FDR correction and Schoenfeld PH diagnostics.
-    """
-    # Filter to tumor samples only (Primary Tumor)
-    tumor_samples = sample_meta[sample_meta["condition"] == "tumor"].copy()
+    up_genes = de_df[(de_df["log2FoldChange"] > 1.5) & (de_df["padj"] < 0.01)].copy()
+    records = []
 
-    # Extract 12-char TCGA patient barcode (e.g., TCGA-67-3773) and deduplicate per patient
-    barcode_col = "tcga_id" if "tcga_id" in tumor_samples.columns else ("barcode" if "barcode" in tumor_samples.columns else "sample_id")
-    tumor_samples["patient_id"] = tumor_samples[barcode_col].str.slice(0, 12)
-    tumor_samples = tumor_samples.drop_duplicates(subset=["patient_id"])
-
-    # Merge tumor sample IDs with clinical survival data
-    merged_meta = pd.merge(tumor_samples, patient_df, left_on="patient_id", right_on="cases.submitter_id")
-    print(f"Matched unique Tumor RNA-seq patients with Survival metadata: {len(merged_meta)}")
-
-    # Select top N significantly upregulated genes with valid HUGO symbols
-    up_genes = annotated_de[
-        (annotated_de["padj"] < 0.01) & (annotated_de["log2FoldChange"] > 1.5)
-    ].copy()
-    up_genes = up_genes[~up_genes["symbol"].str.startswith("ENSG", na=True)]
-    up_genes["score"] = up_genes["log2FoldChange"] * (-np.log10(up_genes["padj"].replace(0, 1e-300)))
-    candidates = up_genes.sort_values("score", ascending=False).head(top_n)
-
-    survival_results = []
-    valid_sample_ids = merged_meta["sample_id"].tolist()
-
-    for ensg_id, row in candidates.iterrows():
-        if ensg_id not in expr_df.index:
-            continue
-        symbol = row["symbol"]
-        gene_vals = expr_df.loc[ensg_id, valid_sample_ids].values
-
-        df_gene = merged_meta.copy()
-        df_gene["expr"] = gene_vals
-
-        # Pre-specified median split for Kaplan-Meier (no p-value optimization)
-        median_val = df_gene["expr"].median()
-        high_grp = df_gene[df_gene["expr"] >= median_val]
-        low_grp = df_gene[df_gene["expr"] < median_val]
-
-        if len(high_grp) < 10 or len(low_grp) < 10:
+    for _, row in up_genes.iterrows():
+        ens = row["ensembl_id"]
+        sym = row["symbol"]
+        if pd.isna(sym) or ens not in expr_log.index:
             continue
 
-        lr = logrank_test(
-            high_grp["time"],
-            low_grp["time"],
-            event_observed_A=high_grp["event"],
-            event_observed_B=low_grp["event"],
-        )
+        df_g = clin.copy()
+        df_g["expr"] = df_g["sample_id"].map(expr_log.loc[ens])
+        df_g = df_g.dropna(subset=["time", "event", "expr"]).copy()
+        df_g = df_g[df_g["time"] > 0]
+        if len(df_g) < 40:
+            continue
 
-        # Multivariate Cox Regression (expr Z-score + age + sex + stage)
-        cox_df = df_gene[["time", "event", "expr", "age", "is_male", "advanced_stage"]].dropna().copy()
-        cox_df["expr_z"] = (cox_df["expr"] - cox_df["expr"].mean()) / (cox_df["expr"].std() + 1e-8)
+        # 1. Prespecified primary test: Median-split Kaplan-Meier log-rank test
+        med = df_g["expr"].median()
+        high = df_g[df_g["expr"] >= med]
+        low = df_g[df_g["expr"] < med]
+        lr = logrank_test(high["time"], low["time"], event_observed_A=high["event"], event_observed_B=low["event"])
+        km_p = float(lr.p_value)
 
-        ph_test_p = np.nan
-        model_type = "multivariate"
+        # 2. Secondary Cox PH model with single standardized expression predictor (expr_z)
+        cox_mv = df_g[["time", "event", "age", "is_male", "advanced_stage"]].dropna().copy()
+        cox_mv["expr_z"] = (
+            df_g.loc[cox_mv.index, "expr"] - df_g.loc[cox_mv.index, "expr"].mean()
+        ) / (df_g.loc[cox_mv.index, "expr"].std() + 1e-8)
+
+        cox_hr = np.nan
+        cox_mv_p = np.nan
+        cox_uv_p = np.nan
+        ph_p = np.nan
+        ph_status = "Not assessed"
+        model_used = "multivariate_cox"
+
         try:
             cph = CoxPHFitter(penalizer=0.1)
-            cph.fit(cox_df, duration_col="time", event_col="event")
-            hr = float(np.exp(cph.params_["expr_z"]))
-            cox_p = float(cph.summary.loc["expr_z", "p"])
-            # Schoenfeld residual diagnostic for proportional hazards assumption
-            ph_res = proportional_hazard_test(cph, cox_df, time_transform="rank")
-            ph_test_p = float(ph_res.summary.loc["expr_z", "p"])
-        except Exception:
-            model_type = "univariate_fallback"
-            cph_uni = CoxPHFitter(penalizer=0.1)
-            cph_uni.fit(cox_df[["time", "event", "expr_z"]], duration_col="time", event_col="event")
-            hr = float(np.exp(cph_uni.params_["expr_z"]))
-            cox_p = float(cph_uni.summary.loc["expr_z", "p"])
+            cph.fit(cox_mv, duration_col="time", event_col="event")
+            cox_hr = float(np.exp(cph.params_["expr_z"]))
+            cox_mv_p = float(cph.summary.loc["expr_z", "p"])
 
-        survival_results.append({
-            "ensembl_id": ensg_id,
-            "symbol": symbol,
-            "log2FoldChange": row["log2FoldChange"],
-            "deseq_padj": row["padj"],
-            "km_logrank_p": lr.p_value,
-            "cox_HR": hr,
-            "cox_multivar_p": cox_p,
-            "schoenfeld_ph_p": ph_test_p,
-            "ph_assumption_ok": bool(pd.isna(ph_test_p) or ph_test_p >= 0.05),
-            "cox_model": model_type,
+            ph_res = proportional_hazard_test(cph, cox_mv, time_transform="rank")
+            ph_p = float(ph_res.summary.loc["expr_z", "p"])
+            ph_status = "Pass" if ph_p >= 0.05 else "Fail"
+        except Exception:
+            model_used = "univariate_fallback"
+            cox_uv = df_g[["time", "event"]].copy()
+            cox_uv["expr_z"] = (df_g["expr"] - df_g["expr"].mean()) / (df_g["expr"].std() + 1e-8)
+            cph_u = CoxPHFitter(penalizer=0.1)
+            cph_u.fit(cox_uv, duration_col="time", event_col="event")
+            cox_hr = float(np.exp(cph_u.params_["expr_z"]))
+            cox_uv_p = float(cph_u.summary.loc["expr_z", "p"])
+
+        records.append({
+            "ensembl_id": ens,
+            "symbol": sym,
+            "log2FoldChange": round(float(row["log2FoldChange"]), 4),
+            "deseq_padj": float(row["padj"]),
+            "km_logrank_p": km_p,
+            "cox_HR": round(cox_hr, 4),
+            "cox_multivar_p": cox_mv_p,
+            "cox_univar_p": cox_uv_p,
+            "schoenfeld_ph_p": ph_p,
+            "ph_assumption_status": ph_status,
+            "cox_model": model_used,
         })
 
-    surv_df = pd.DataFrame(survival_results)
+    res_df = pd.DataFrame(records)
+    res_df["km_logrank_padj"] = multipletests(res_df["km_logrank_p"], method="fdr_bh")[1]
+    valid_mv = res_df["cox_multivar_p"].notna()
+    res_df["cox_multivar_padj"] = np.nan
+    if valid_mv.any():
+        res_df.loc[valid_mv, "cox_multivar_padj"] = multipletests(res_df.loc[valid_mv, "cox_multivar_p"], method="fdr_bh")[1]
 
-    # Apply Benjamini-Hochberg FDR correction across all tested survival hypotheses
-    if not surv_df.empty:
-        surv_df["km_logrank_padj"] = multipletests(surv_df["km_logrank_p"], method="fdr_bh")[1]
-        surv_df["cox_multivar_padj"] = multipletests(surv_df["cox_multivar_p"], method="fdr_bh")[1]
+    res_df = res_df.sort_values(["km_logrank_padj", "km_logrank_p"])
+    res_df.to_csv(out_all_csv, index=False)
 
-    # Filter prognostic candidate genes: FDR-adjusted significance (padj < 0.10) & HR > 1.0
-    prognostic = surv_df[
-        ((surv_df["km_logrank_padj"] < 0.10) | (surv_df["cox_multivar_padj"] < 0.10))
-        & (surv_df["cox_HR"] > 1.0)
-    ].sort_values("cox_multivar_padj")
-
-    os.makedirs(output_dir, exist_ok=True)
-    surv_df.to_csv(f"{output_dir}/LUAD_all_survival_screen.csv", index=False)
-    prognostic.to_csv(f"{output_dir}/LUAD_prognostic_candidates.csv", index=False)
-    print(f"\nFound {len(prognostic)} prognostic candidate genes (FDR-adjusted p < 0.10, HR > 1.0)!")
-    return prognostic, merged_meta
+    cand_df = res_df[(res_df["km_logrank_padj"] < 0.10) & (res_df["cox_HR"] > 1.0)].copy()
+    cand_df.to_csv(out_cand_csv, index=False)
+    print(f"Saved {len(res_df)} tested genes -> '{out_all_csv}'")
+    print(f"Saved {len(cand_df)} KM FDR-adjusted candidates (q < 0.10, HR > 1.0) -> '{out_cand_csv}'")
+    return res_df, cand_df
 
 
-def query_string_hubs(gene_symbols, output_dir="results"):
-    """
-    Queries the STRING v12 functional association API to compute network degree
-    centrality and prioritize connected signaling candidates.
-    """
-    if len(gene_symbols) < 2:
-        return pd.DataFrame()
-
-    print(f"\nQuerying STRING functional association network for {len(gene_symbols)} prognostic candidates...")
-    url = "https://version-12-0.string-db.org/api/json/network"
-    params = {
-        "identifiers": "%0d".join(gene_symbols[:50]),
-        "species": 9606,  # Homo sapiens
-        "required_score": 400,  # Medium confidence (0.4)
-    }
-    resp = requests.post(url, data=params, timeout=30)
-    edges = resp.json()
-
-    G = nx.Graph()
-    for g in gene_symbols[:50]:
-        G.add_node(g)
-    for edge in edges:
-        G.add_edge(edge["preferredName_A"], edge["preferredName_B"], weight=edge["score"])
-
-    deg = dict(G.degree())
-    bet = nx.betweenness_centrality(G)
-    hub_df = pd.DataFrame({
-        "symbol": list(G.nodes()),
-        "string_degree": [deg[n] for n in G.nodes()],
-        "betweenness": [round(bet[n], 4) for n in G.nodes()],
-    }).sort_values(by=["string_degree", "betweenness"], ascending=False)
-
-    hub_df.to_csv(f"{output_dir}/LUAD_string_hubs.csv", index=False)
-    return hub_df
+if __name__ == "__main__":
+    run_corrected_survival_screen()

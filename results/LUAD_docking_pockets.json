@@ -1,26 +1,162 @@
 {
-  "NEK2": {
-    "center": [
-      26.506,
-      12.869,
-      -16.121
-    ],
-    "box_size": [
-      20,
-      20,
-      20
-    ]
+  "targets": {
+    "NEK2": {
+      "holo_pdb": "structures/targets/NEK2_2W5B.pdb",
+      "grid_center": [
+        26.506,
+        12.869,
+        -16.121
+      ],
+      "box_size": [
+        20,
+        20,
+        20
+      ],
+      "receptor_prep": {
+        "rdkit_sanitized": true,
+        "polar_HD_atoms": 495
+      }
+    },
+    "PLK1": {
+      "holo_pdb": "structures/targets/PLK1_2OWB.pdb",
+      "grid_center": [
+        -0.14,
+        24.376,
+        67.624
+      ],
+      "box_size": [
+        20,
+        20,
+        20
+      ],
+      "receptor_prep": {
+        "rdkit_sanitized": true,
+        "polar_HD_atoms": 536
+      }
+    }
   },
-  "PLK1": {
-    "center": [
-      -0.14,
-      24.376,
-      67.624
-    ],
-    "box_size": [
-      20,
-      20,
-      20
-    ]
+  "alignments": {
+    "NEK2": {
+      "NEK4": {
+        "pocket_rmsd_A": 1.732,
+        "ca_centroid_diff_A": 0.0,
+        "pocket_to_grid_center_A": 2.861,
+        "matched_pocket_residues": 54,
+        "pocket_seq_id_pct": 55.6,
+        "rationale": "Foldseek paralog",
+        "receptor_prep": {
+          "rdkit_sanitized": true,
+          "polar_HD_atoms": 1602
+        }
+      },
+      "NEK7": {
+        "pocket_rmsd_A": 2.212,
+        "ca_centroid_diff_A": 0.0,
+        "pocket_to_grid_center_A": 2.931,
+        "matched_pocket_residues": 56,
+        "pocket_seq_id_pct": 44.6,
+        "rationale": "Foldseek paralog",
+        "receptor_prep": {
+          "rdkit_sanitized": true,
+          "polar_HD_atoms": 544
+        }
+      },
+      "NEK8": {
+        "pocket_rmsd_A": 2.391,
+        "ca_centroid_diff_A": 0.0,
+        "pocket_to_grid_center_A": 2.931,
+        "matched_pocket_residues": 56,
+        "pocket_seq_id_pct": 41.1,
+        "rationale": "Foldseek paralog",
+        "receptor_prep": {
+          "rdkit_sanitized": true,
+          "polar_HD_atoms": 1179
+        }
+      },
+      "PLK1_CTRL": {
+        "pocket_rmsd_A": 8.038,
+        "ca_centroid_diff_A": 0.0,
+        "pocket_to_grid_center_A": 3.151,
+        "matched_pocket_residues": 53,
+        "pocket_seq_id_pct": 47.2,
+        "rationale": "Established clinical target control (BI-2536/Volasertib)",
+        "receptor_prep": {
+          "rdkit_sanitized": true,
+          "polar_HD_atoms": 536
+        }
+      },
+      "AURKA_CTRL": {
+        "pocket_rmsd_A": 4.284,
+        "ca_centroid_diff_A": 0.0,
+        "pocket_to_grid_center_A": 2.865,
+        "matched_pocket_residues": 53,
+        "pocket_seq_id_pct": 41.5,
+        "rationale": "Established clinical target control (Alisertib)",
+        "receptor_prep": {
+          "rdkit_sanitized": true,
+          "polar_HD_atoms": 466
+        }
+      }
+    },
+    "PLK1": {
+      "PHKG2": {
+        "pocket_rmsd_A": 0.884,
+        "ca_centroid_diff_A": 0.0,
+        "pocket_to_grid_center_A": 4.045,
+        "matched_pocket_residues": 49,
+        "pocket_seq_id_pct": 30.6,
+        "rationale": "Foldseek structural analog",
+        "receptor_prep": {
+          "rdkit_sanitized": true,
+          "polar_HD_atoms": 734
+        }
+      },
+      "RPS6KB1": {
+        "pocket_rmsd_A": 1.615,
+        "ca_centroid_diff_A": 0.0,
+        "pocket_to_grid_center_A": 4.045,
+        "matched_pocket_residues": 49,
+        "pocket_seq_id_pct": 42.9,
+        "rationale": "Foldseek structural analog",
+        "receptor_prep": {
+          "rdkit_sanitized": true,
+          "polar_HD_atoms": 927
+        }
+      },
+      "AURKA_CTRL": {
+        "pocket_rmsd_A": 3.01,
+        "ca_centroid_diff_A": 0.0,
+        "pocket_to_grid_center_A": 4.045,
+        "matched_pocket_residues": 49,
+        "pocket_seq_id_pct": 40.8,
+        "rationale": "Established clinical target control (Alisertib)",
+        "receptor_prep": {
+          "rdkit_sanitized": true,
+          "polar_HD_atoms": 466
+        }
+      },
+      "NEK2_CTRL": {
+        "pocket_rmsd_A": 6.143,
+        "ca_centroid_diff_A": 0.0,
+        "pocket_to_grid_center_A": 4.236,
+        "matched_pocket_residues": 46,
+        "pocket_seq_id_pct": 41.3,
+        "rationale": "Primary mitotic kinase comparator",
+        "receptor_prep": {
+          "rdkit_sanitized": true,
+          "polar_HD_atoms": 495
+        }
+      }
+    }
+  },
+  "positive_control_redocking": {
+    "pdb_id": "2RKU",
+    "ligand": "BI-2536 (R78)",
+    "vina_score": -8.872,
+    "heavy_atom_rmsd_A": 6.46,
+    "matched_heavy_atoms": 35,
+    "acceptance_threshold_A": 2.0,
+    "passed": false,
+    "pose_file": "docking/poses/CONTROL_PLK1_2RKU_BI2536_redock.pdbqt"
   }
 }

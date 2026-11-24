@@ -16,7 +16,9 @@ def pdbqt_to_pdb_block(pdbqt_path, first_model_only=True):
                 break
             if line.startswith(("ATOM", "HETATM")):
                 elem = line[77:79].strip()
-                if elem in {"NA", "OA", "SA", "HD"}:
+                if elem == "A":
+                    elem = "C"
+                elif elem in {"NA", "OA", "SA", "HD"}:
                     elem = elem[0]
                 pdb_line = f"{line[:66]:<66}          {elem:>2}\n"
                 lines.append(pdb_line)
@@ -27,7 +29,6 @@ def pdbqt_to_pdb_block(pdbqt_path, first_model_only=True):
 def build_static_site(out_dir="docs"):
     os.makedirs(out_dir, exist_ok=True)
 
-    # 1. Load all pipeline JSON & CSV outputs
     with open("results/LUAD_km_curves_web.json", "r") as f:
         km_data = json.load(f)
 
@@ -40,15 +41,15 @@ def build_static_site(out_dir="docs"):
     foldseek_df = pd.read_csv("results/LUAD_foldseek_offtargets.csv")
     foldseek_df = foldseek_df.where(pd.notnull(foldseek_df), None)
 
-    # Compute exact survival summary dynamically from archived screen CSV
+    # Read exact survival summary dynamically from regenerated survival screen CSV
     surv_csv = "results/LUAD_all_survival_screen.csv"
     n_nominal = 42
     n_fdr_km = 24
     if os.path.exists(surv_csv):
         sdf = pd.read_csv(surv_csv)
-        sdf["km_padj_bh"] = multipletests(sdf["km_logrank_p"], method="fdr_bh")[1]
-        n_nominal = int((((sdf["km_logrank_p"] < 0.05) | (sdf["cox_multivar_p"] < 0.05)) & (sdf["cox_HR"] > 1.0)).sum())
-        n_fdr_km = int(((sdf["km_padj_bh"] < 0.10) & (sdf["cox_HR"] > 1.0)).sum())
+        padj_col = sdf["km_logrank_padj"] if "km_logrank_padj" in sdf.columns else multipletests(sdf["km_logrank_p"], method="fdr_bh")[1]
+        n_nominal = int(((sdf["km_logrank_p"] < 0.05) & (sdf["cox_HR"] > 1.0)).sum())
+        n_fdr_km = int(((padj_col < 0.10) & (sdf["cox_HR"] > 1.0)).sum())
 
     # Compute exact top dS_Vina candidate dynamically from actual Vina screen CSV
     best_row = docking_df.sort_values("delta_S_vina").iloc[0]
@@ -227,13 +228,13 @@ def build_static_site(out_dir="docs"):
       <h1>Transcriptomic Target Prioritization &amp; Structure-Guided Computational Screening in TCGA-LUAD</h1>
       <p class="subtitle">
         Exploratory computational workflow integrating <strong>PyDESeq2</strong> differential expression (log2FC &gt; 1.5, FDR &lt; 0.01),
-        <strong>Kaplan–Meier / Multivariate Cox</strong> survival stratification, <strong>STRING</strong> functional network prioritization,
+        <strong>Kaplan–Meier / Cox</strong> survival stratification, <strong>STRING</strong> functional network prioritization,
         <strong>Foldseek</strong> 3D structural analog identification with local ATP-pocket superposition, and multi-seed <strong>AutoDock Vina (&Delta;S<sub>Vina</sub>)</strong> counter-screening.
       </p>
       <div class="metrics-grid">
         <div class="metric-card"><div class="metric-val">{n_fdr_km} FDR / {n_nominal} Nom.</div><div class="metric-lbl">Prognostic LUAD Candidates (KM BH q &lt; 0.10 / Nominal p &lt; 0.05)</div></div>
         <div class="metric-card"><div class="metric-val">NEK2 &amp; PLK1</div><div class="metric-lbl">Network-Prioritized Mitotic Kinase Candidates</div></div>
-        <div class="metric-card"><div class="metric-val">5 Analogs + 2 Ctrls</div><div class="metric-lbl">ATP-Pocket Aligned Off-Targets (Pocket RMSD &le; 3.0 &Aring;)</div></div>
+        <div class="metric-card"><div class="metric-val">5 Analogs + Controls</div><div class="metric-lbl">ATP-Pocket Aligned Off-Targets &amp; Known Clinical Controls</div></div>
         <div class="metric-card"><div class="metric-val">{best_ds_str}</div><div class="metric-lbl">{best_ds_lbl}</div></div>
       </div>
     </div>
@@ -311,9 +312,9 @@ def build_static_site(out_dir="docs"):
     <div class="card">
       <h2>5. Methodological Scope &amp; Scientific Qualifications (v1.1)</h2>
       <ul style="color: #cbd5e1; font-size: 0.9rem; margin: 0; padding-left: 1.25rem;">
-        <li><strong>Differential Expression &amp; Survival:</strong> TCGA-LUAD candidates were prioritized via PyDESeq2 (log<sub>2</sub>FC &gt; 1.5, FDR &lt; 0.01) followed by pre-specified median-split Kaplan–Meier and clinical-covariate Cox screening (42 nominal candidates; 24 survive Benjamini–Hochberg FDR q &lt; 0.10 on log-rank testing). Independent cohort validation is planned for v2.0.</li>
-        <li><strong>Structural Off-Target Counter-Screening:</strong> Off-target receptors are superposed strictly onto the primary kinase ATP-binding pocket (within 10 &Aring; of the co-crystallized ligand; verified 0.000 &Aring; grid shift). MARK2 (local pocket RMSD = 7.24 &Aring;) is excluded from ATP-pocket counter-screening, while established clinical targets (AURKA PDB: 1MQ4 and PLK1 PDB: 2OWB) are included as mandatory pharmacological controls.</li>
-        <li><strong>Docking Score Interpretation:</strong> AutoDock Vina scores (S<sub>primary</sub>) and score differentials (&Delta;S<sub>Vina</sub> = S<sub>primary</sub> &minus; S<sub>best off-target</sub>) represent empirical computational ranking metrics across 3 random seeds (exhaustiveness = 16), not experimental binding free energies (&Delta;G) or validated biochemical selectivity.</li>
+        <li><strong>Differential Expression &amp; Survival:</strong> TCGA-LUAD overexpressed candidates (log<sub>2</sub>FC &gt; 1.5, FDR &lt; 0.01) were evaluated using pre-specified median-split Kaplan–Meier log-rank testing as the primary survival screen (42 nominal p &lt; 0.05; 24 survive Benjamini–Hochberg FDR q &lt; 0.10 with HR &gt; 1.0) alongside standardized expression Cox regression. Independent cohort validation is planned for v2.0.</li>
+        <li><strong>Structural Alignment &amp; Controls:</strong> Off-target structures are superposed strictly onto primary ATP-pocket residues (within 10 &Aring; of the co-crystallized ligand), with pocket RMSD, C&alpha; centroid shift, and pocket-to-grid-center distance recorded in <code>LUAD_docking_pockets.json</code>. Both established clinical target controls (<strong>AURKA 1MQ4</strong> and <strong>PLK1 2OWB</strong>) are included in both counter-screens, and co-crystal redocking is verified on <strong>PLK1 2RKU</strong>.</li>
+        <li><strong>Docking Score &amp; Uncertainty Interpretation:</strong> &Delta;S<sub>Vina</sub> = S<sub>primary</sub> &minus; S<sub>best off-target</sub> represents an empirical Vina score differential rather than experimental &Delta;G or validated biochemical selectivity (notably, BI-2536 scores &minus;9.24 on PLK1 vs. &minus;9.56 on PHKG2, &Delta;S<sub>Vina</sub> = +0.32). Three-seed standard deviations quantify Vina search convergence, not scoring-function accuracy.</li>
       </ul>
     </div>
   </main>
