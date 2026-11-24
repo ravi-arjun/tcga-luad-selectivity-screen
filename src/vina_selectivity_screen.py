@@ -11,6 +11,7 @@ from Bio.SeqUtils import seq1
 from rdkit import Chem
 from rdkit.Chem import AllChem, Descriptors, rdMolAlign
 from meeko import MoleculePreparation, PDBQTWriterLegacy
+from rdkit.Chem import AllChem, Descriptors, rdMolAlign, rdFMCS
 
 VINA_EXE = os.path.join("bin", "vina.exe")
 
@@ -354,36 +355,57 @@ def run_vina_multiseed(receptor_pdbqt, ligand_pdbqt, center, out_pose_pdbqt, box
     return round(float(np.mean(scores)), 3), round(float(np.std(scores)), 3)
 
 
-def validate_cocrystal_redocking(plk1_pdbqt, bi2536_pdbqt, center):
-    """Positive control: redocks BI-2536 into PLK1 (2OWB) and computes heavy-atom RMSD vs crystal pose."""
-    redock_out = "docking/poses/CONTROL_PLK1_BI2536_redock.pdbqt"
-    mean_s, _ = run_vina_multiseed(plk1_pdbqt, bi2536_pdbqt, center, redock_out, exhaustiveness=16, seeds=(42,))
+def validate_cocrystal_redocking(bi2536_pdbqt):
+    """
+    Positive control: downloads PDB 2RKU (human PLK1 co-crystallized with BI-2536, ligand R78),
+    redocks BI-2536 into the 2RKU ATP pocket, and computes heavy-atom pose RMSD (in-place, no alignment).
+    """
+    pdb_2rku = "structures/targets/PLK1_2RKU.pdb"
+    if not os.path.exists(pdb_2rku):
+        urllib.request.urlretrieve("https://files.rcsb.org/download/2RKU.pdb", pdb_2rku)
 
-    # Extract crystal BI-2536 coordinates from 2OWB (residue name IB8)
-    ref_mol = Chem.MolFromSmiles(LIGAND_LIBRARY["BI-2536"]["smiles"])
+    center_2rku, _, _ = extract_holo_ligand_info(pdb_2rku, chain_id="A")
+    rec_2rku_pdbqt = "docking/receptors/PLK1_2RKU_control.pdbqt"
+    pdb_to_receptor_pdbqt_protonated(pdb_2rku, rec_2rku_pdbqt, chain_id="A")
+
+    redock_out = "docking/poses/CONTROL_PLK1_2RKU_BI2536_redock.pdbqt"
+    mean_s, _ = run_vina_multiseed(rec_2rku_pdbqt, bi2536_pdbqt, center_2rku, redock_out, exhaustiveness=16, seeds=(42,))
+
+    # Extract crystallographic BI-2536 heavy atoms from 2RKU (Chain A, residue R78)
     cryst_lines = []
-    with open("structures/targets/PLK1_2OWB.pdb") as f:
+    with open(pdb_2rku) as f:
         for line in f:
-            if line.startswith("HETATM") and line[17:20].strip() == "IB8" and line[21] == "A":
+            if line.startswith("HETATM") and line[17:20].strip() == "R78" and line[21] == "A":
                 cryst_lines.append(line)
-    cryst_mol = Chem.MolFromPDBBlock("".join(cryst_lines), removeHs=True)
-    cryst_mol = AllChem.AssignBondOrdersFromTemplate(ref_mol, cryst_mol)
+    cryst_mol = Chem.MolFromPDBBlock("".join(cryst_lines), removeHs=True, sanitize=False)
 
-    # Extract docked Mode 1 pose coordinates
+    # Extract docked Mode 1 heavy atoms
     dock_lines = []
     with open(redock_out) as f:
         for line in f:
             if line.startswith("ENDMDL"):
                 break
             if line.startswith(("ATOM", "HETATM")):
-                elem = line[77:79].strip()
-                if elem != "HD":
-                    dock_lines.append(f"HETATM{line[6:66]}          {elem[0]:>2}\n")
-    dock_mol = Chem.MolFromPDBBlock("".join(dock_lines), removeHs=True)
-    dock_mol = AllChem.AssignBondOrdersFromTemplate(ref_mol, dock_mol)
+                ad4_t = line[77:79].strip()
+                if ad4_t not in {"H", "HD"}:
+                    elem = ad4_t[0] if ad4_t in {"NA", "OA", "SA"} else ad4_t
+                    dock_lines.append(f"HETATM{line[6:66]}          {elem:>2}\n")
+    dock_mol = Chem.MolFromPDBBlock("".join(dock_lines), removeHs=True, sanitize=False)
 
-    rmsd = round(float(rdMolAlign.CalcRMS(cryst_mol, dock_mol)), 3)
-    print(f"[POSITIVE CONTROL] PLK1 (2OWB) + BI-2536 Co-Crystal Redocking: Score = {mean_s:.2f}, Heavy-Atom RMSD = {rmsd:.3f} A\n")
+    # Match heavy atoms via Maximum Common Substructure (element-wise) and compute in-place RMSD
+    mcs = rdFMCS.FindMCS([cryst_mol, dock_mol], bondCompare=rdFMCS.BondCompare.CompareAny, completeRingsOnly=False)
+    patt = Chem.MolFromSmarts(mcs.smartsString)
+    cryst_match = cryst_mol.GetSubstructMatch(patt)
+    dock_match = dock_mol.GetSubstructMatch(patt)
+
+    cryst_conf = cryst_mol.GetConformer()
+    dock_conf = dock_mol.GetConformer()
+    sq_dists = [
+        np.sum((np.array(cryst_conf.GetAtomPosition(ci)) - np.array(dock_conf.GetAtomPosition(di))) ** 2)
+        for ci, di in zip(cryst_match, dock_match)
+    ]
+    rmsd = round(float(np.sqrt(np.mean(sq_dists))), 3)
+    print(f"[POSITIVE CONTROL] PLK1 (2RKU) + BI-2536 Co-Crystal Redocking: Score = {mean_s:.2f}, Heavy-Atom RMSD = {rmsd:.3f} A ({len(cryst_match)} heavy atoms)\n")
     return rmsd
 
 
@@ -413,7 +435,7 @@ if __name__ == "__main__":
         if target_sym == "PLK1":
             bi_pdbqt = lig_df[lig_df["ligand"] == "BI-2536"]["pdbqt_path"].values[0]
             try:
-                redock_rmsd = validate_cocrystal_redocking(primary_rec_pdbqt, bi_pdbqt, center)
+                redock_rmsd = validate_cocrystal_redocking(bi_pdbqt)
                 pocket_metadata["PLK1_BI2536_redock_RMSD_A"] = redock_rmsd
             except Exception as e:
                 print(f"[WARN] Redocking RMSD check skipped: {e}")
