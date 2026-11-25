@@ -1,0 +1,417 @@
+from glob import glob
+from importlib.metadata import metadata
+from importlib.resources import files, path
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+import json
+import numpy as np
+import pickle
+import seaborn as sns
+from sklearn.decomposition import PCA
+from survival_and_hubs import load_clean_clinical, run_survival_screen, query_string_hubs
+print(os.getcwd())
+
+# Expression Matrix
+def sample_cleaner(name, path):
+    df = pd.read_csv(path, sep='\t', comment='#')
+    df = df[["gene_id", "unstranded"]]
+    df = df[df["gene_id"].str.startswith("ENSG")].copy()
+    df["gene_id"] = df["gene_id"].str.split(".").str[0]
+    df = df.drop_duplicates(subset=["gene_id"]).set_index("gene_id")
+    df.columns = [name]
+    return df
+
+def build_expression_matrix(raw_path):
+    files = glob(f"{raw_path}/**/*.rna_seq.augmented_star_gene_counts.tsv")
+    dfs = []
+
+    for i, f in enumerate(files, start=1):
+        sample_name = f"sample_{i}"
+        df = sample_cleaner(sample_name, f)
+        dfs.append(df)
+
+    expression_matrix = pd.concat(dfs, axis=1)
+    return expression_matrix, files
+
+# Metadata
+def load_metadata(metadata_path):
+    metadata = pd.read_csv(metadata_path, sep='\t', comment='#')
+
+    metadata = metadata[
+        ["samples.submitter_id", "samples.sample_type"]
+    ].copy()
+
+    metadata["condition"] = metadata["samples.sample_type"].apply(
+        lambda x: "tumor" if "Tumor" in x else "normal"
+    )
+
+    metadata = metadata[
+        ["samples.submitter_id", "condition"]
+    ]
+
+    metadata = metadata.rename(
+        columns={"samples.submitter_id": "tcga_id"}
+    )
+
+    return metadata
+# File ID -> TCGA ID Lookup
+def build_file_lookup(metadata_json):
+
+    with open(metadata_json, "r") as f:
+        metadata = json.load(f)
+
+    lookup = []
+
+    for record in metadata:
+
+        file_id = record["file_id"]
+
+        tcga_id = record["associated_entities"][0]["entity_submitter_id"]
+
+        tcga_id = "-".join(tcga_id.split("-")[:4])
+
+        lookup.append({
+            "file_id": file_id,
+            "tcga_id": tcga_id
+        })
+
+    return pd.DataFrame(lookup)
+# Sample Mapping
+def build_sample_map(expression_matrix, files):
+
+    sample_map = pd.DataFrame({
+        "sample_id": expression_matrix.columns,
+        "file_path": files
+    })
+
+    sample_map["file_id"] = sample_map["file_path"].apply(
+        lambda x: os.path.normpath(x).split(os.sep)[-2]
+    )
+    
+
+    return sample_map
+# Sample Separation
+def separate_samples(expression_matrix, tcga_tumor):
+    tumor_samples = tcga_tumor[
+        tcga_tumor["condition"] == "tumor"
+    ]["sample_id"]
+
+    normal_samples = tcga_tumor[
+        tcga_tumor["condition"] == "normal"
+    ]["sample_id"]
+
+    tumor_matrix = expression_matrix[tumor_samples]
+    normal_matrix = expression_matrix[normal_samples]
+
+    return tumor_matrix, normal_matrix
+
+# Main Pipeline
+def run_pipeline(cancer_type, raw_path, metadata_path, metadata_json):
+    print(f"Running {cancer_type} pipeline...")
+
+    expression_matrix, files = build_expression_matrix(raw_path)
+    print(files[0])
+
+    path = files[0]
+    print(path.split("\\"))
+    print(expression_matrix.head())
+
+    expression_matrix.to_csv(f"{cancer_type}_raw_counts.csv")
+
+    metadata = load_metadata(metadata_path)
+    file_lookup = build_file_lookup(metadata_json)
+    print(metadata.head())
+
+    sample_map = build_sample_map(
+        expression_matrix,
+        files
+        
+    )
+
+    sample_map = sample_map.merge(
+        file_lookup,
+        on="file_id",
+        how="left"
+)
+
+    tcga_tumor = sample_map.merge(
+        metadata,
+        on="tcga_id",
+        how="left"
+)
+
+    print(tcga_tumor.head())
+
+    return expression_matrix, metadata, sample_map, tcga_tumor
+
+# Normalization
+def normalize_counts(expression_matrix):
+    library_sizes = expression_matrix.sum(axis=0)
+
+    cpm = expression_matrix.div(
+        library_sizes,
+        axis=1
+    ) * 1_000_000
+
+    log_cpm = np.log2(cpm + 1)
+
+    return log_cpm
+# Gene ID Cleaning
+def clean_gene_ids(expression_matrix):
+    expression_matrix = expression_matrix.copy()
+    expression_matrix.index = expression_matrix.index.str.split(".").str[0]
+    return expression_matrix
+
+# Library Size
+def calculate_library_sizes(expression_matrix):
+    return expression_matrix.sum(axis=0)
+
+    # Library Size Plot
+def plot_library_sizes(library_sizes):
+    plt.figure(figsize=(12, 5))
+    plt.hist(library_sizes, bins=30)
+    plt.xlabel("Total Counts")
+    plt.ylabel("Number of Samples")
+    plt.title("LUAD Sample Library Sizes")
+    plt.show()
+
+# Expression Filtering
+def filter_low_expression(normalized_expression, min_cpm=1, min_samples=10):
+    expressed = (normalized_expression > np.log2(min_cpm + 1)).sum(axis=1)
+    filtered = normalized_expression[expressed >= min_samples]
+    return filtered
+
+
+from pydeseq2.dds import DeseqDataSet
+from pydeseq2.ds import DeseqStats
+
+def differential_expression(filtered_raw_counts, tcga_tumor):
+    """
+    Performs negative binomial differential expression analysis via PyDESeq2.
+    """
+    # Align counts and metadata to ensure identical sample ordering
+    valid_samples = [s for s in tcga_tumor["sample_id"] if s in filtered_raw_counts.columns]
+    
+    # PyDESeq2 expects counts formatted as (samples x genes) with integer counts
+    counts_df = filtered_raw_counts[valid_samples].T.astype(int)
+    metadata_df = tcga_tumor.set_index("sample_id").loc[valid_samples]
+
+    # Initialize DESeqDataSet with 'normal' set as reference condition
+    dds = DeseqDataSet(
+        counts=counts_df,
+        metadata=metadata_df,
+        design_factors="condition",
+        ref_level="normal"  # Positive fold change = upregulated in tumor
+    )
+    
+    print("\nFitting size factors and dispersions (PyDESeq2)...")
+    dds.deseq2()
+
+    print("Running Wald hypothesis test...")
+    stat_res = DeseqStats(dds, contrast=["condition", "tumor", "normal"])
+    stat_res.summary()
+    
+    results = stat_res.results_df
+    # Flag significant differentially expressed genes (FDR < 0.05 and |log2FC| >= 1.5)
+    results["significant"] = (results["padj"] < 0.05) & (results["log2FoldChange"].abs() >= 1.5)
+    
+    return results
+
+def create_volcano_plot(de_results, lfc_thresh=1.5, padj_thresh=0.05):
+    """
+    Generates a publication-ready volcano plot of differential expression results.
+    """
+    df = de_results.dropna(subset=["padj"]).copy()
+    df["neg_log10_padj"] = -np.log10(df["padj"].replace(0, 1e-300))  # Prevent log(0)
+    
+    plt.figure(figsize=(9, 6))
+    
+    # Non-significant genes
+    ns = df[(df["padj"] >= padj_thresh) | (df["log2FoldChange"].abs() < lfc_thresh)]
+    plt.scatter(ns["log2FoldChange"], ns["neg_log10_padj"], c="#bdc3c7", s=8, alpha=0.4, label="Not Significant")
+    
+    # Upregulated genes
+    up = df[(df["padj"] < padj_thresh) & (df["log2FoldChange"] >= lfc_thresh)]
+    plt.scatter(up["log2FoldChange"], up["neg_log10_padj"], c="#e74c3c", s=12, alpha=0.7, label=f"Upregulated ({len(up):,})")
+    
+    # Downregulated genes
+    down = df[(df["padj"] < padj_thresh) & (df["log2FoldChange"] <= -lfc_thresh)]
+    plt.scatter(down["log2FoldChange"], down["neg_log10_padj"], c="#3498db", s=12, alpha=0.7, label=f"Downregulated ({len(down):,})")
+    
+    # Threshold indicator lines
+    plt.axvline(lfc_thresh, color="grey", linestyle="--", linewidth=0.8)
+    plt.axvline(-lfc_thresh, color="grey", linestyle="--", linewidth=0.8)
+    plt.axhline(-np.log10(padj_thresh), color="grey", linestyle="--", linewidth=0.8)
+    
+    plt.title("Differential Gene Expression: LUAD vs Normal Tissue", fontsize=13, weight="bold")
+    plt.xlabel("Log2 Fold Change", fontsize=11)
+    plt.ylabel("-Log10 Adjusted p-value (FDR)", fontsize=11)
+    plt.legend(frameon=True, loc="upper right")
+    plt.grid(True, linestyle="--", alpha=0.4)
+    plt.tight_layout()
+    plt.show()
+
+import mygene
+
+def annotate_genes(de_results):
+    """
+    Queries MyGene.info to map Ensembl gene IDs to official HUGO Gene Symbols.
+    """
+    print("\nMapping Ensembl IDs to Gene Symbols via MyGene...")
+    mg = mygene.MyGeneInfo()
+    ensembl_ids = de_results.index.tolist()
+    
+    # Query gene symbols
+    gene_info = mg.querymany(
+        ensembl_ids, 
+        scopes="ensembl.gene", 
+        fields=["symbol", "name"], 
+        species="human",
+        as_dataframe=True
+    )
+    
+    # Deduplicate and extract symbol mapping
+    gene_info = gene_info[~gene_info.index.duplicated(keep="first")]
+    
+    df = de_results.copy()
+    df["symbol"] = gene_info["symbol"].reindex(df.index)
+    # If a gene symbol is missing, fallback to its Ensembl ID
+    df["symbol"] = df["symbol"].fillna(pd.Series(df.index, index=df.index))
+    
+    return df
+
+
+def get_top_overexpressed_genes(annotated_de, n_top=25):
+    upregulated = annotated_de[
+        (annotated_de["padj"] < 0.05) & (annotated_de["log2FoldChange"] >= 1.5)
+    ].copy()
+    upregulated["rank_score"] = upregulated["log2FoldChange"] * (-np.log10(upregulated["padj"].replace(0, 1e-300)))
+    return upregulated.sort_values(by="rank_score", ascending=False).head(n_top)
+
+
+def create_heatmap(top_candidates, filtered_expression, tcga_tumor, output_fig="results/top_genes_heatmap.png"):
+    """
+    Plots a hierarchically clustered heatmap of top candidate genes across Tumor vs Normal samples.
+    """
+    # Align samples and sort them by condition for clean visualization
+    sample_annot = tcga_tumor.set_index("sample_id").loc[filtered_expression.columns]
+    sorted_samples = sample_annot.sort_values(by="condition").index
+    
+    # Extract log2(CPM+1) expression for top candidates
+    target_ids = top_candidates.index
+    expr_subset = filtered_expression.loc[target_ids, sorted_samples].copy()
+    
+    # Replace Ensembl IDs with readable Gene Symbols for the y-axis
+    id_to_symbol = top_candidates["symbol"].to_dict()
+    expr_subset.index = [id_to_symbol.get(i, i) for i in expr_subset.index]
+    
+    # Z-score normalization per gene across samples (centers mean at 0, unit variance)
+    expr_zscore = expr_subset.apply(lambda x: (x - x.mean()) / x.std(), axis=1)
+    
+    # Define condition color bar
+    condition_colors = sample_annot.loc[sorted_samples, "condition"].map(
+        {"tumor": "#e74c3c", "normal": "#3498db"}
+    )
+    
+    g = sns.clustermap(
+        expr_zscore,
+        col_cluster=False,          # Keep samples cleanly grouped by condition
+        row_cluster=True,           # Cluster co-expressed genes together
+        col_colors=condition_colors,
+        cmap="vlag",
+        center=0,
+        vmin=-2.5,
+        vmax=2.5,
+        figsize=(12, 8),
+        cbar_kws={"label": "Expression Z-Score"}
+    )
+    
+    g.fig.suptitle("Expression Profile of Top Prioritized Genes in LUAD", fontsize=14, weight="bold", y=1.02)
+    g.ax_heatmap.set_xlabel("Samples (Normal: Blue | Tumor: Red)", fontsize=11)
+    g.ax_heatmap.set_ylabel("Candidate Genes", fontsize=11)
+    
+    plt.tight_layout()
+    plt.savefig(output_fig, dpi=300)
+    plt.show()
+
+
+
+
+# Functional Analysis
+def go_analysis(gene_list):
+    pass
+
+def pathway_analysis(gene_list):
+    pass
+
+# Survival Analysis
+def survival_analysis(clinical_data, gene_expression):
+    pass
+
+def create_survival_curve(clinical_data, gene_expression):
+    pass
+
+# Protein Analysis
+def fetch_protein_information(gene_list):
+    pass
+
+def predict_protein_structure(gene_list):
+    pass
+
+# Druggability
+def druggability_analysis(gene_list):
+    pass
+
+# Export
+def export_results(cancer_type):
+    pass
+
+
+
+if __name__ == "__main__":
+    cache_file = "results/stage1_cache.pkl"
+
+    # --- PART A: LOAD & RUN PYDESEQ2 (OR LOAD FROM CACHE IN 0.1s) ---
+    if os.path.exists(cache_file):
+        print("\n[CACHE HIT] Loading pre-computed expression & PyDESeq2 results...")
+        with open(cache_file, "rb") as f:
+            cache = pickle.load(f)
+        filtered_expression = cache["filtered_expression"]
+        tcga_tumor = cache["tcga_tumor"]
+        annotated_de = cache["annotated_de"]
+        top_candidates = cache["top_candidates"]
+    else:
+        raise FileNotFoundError(
+            "results/stage1_cache.pkl not found! Run Stage 1 generation first."
+        )
+        os.makedirs("results", exist_ok=True)
+        with open(cache_file, "wb") as f:
+            pickle.dump({
+                "filtered_expression": filtered_expression,
+                "tcga_tumor": tcga_tumor,
+                "annotated_de": annotated_de,
+                "top_candidates": top_candidates,
+            }, f)
+        print(f"Saved Stage 1 cache to '{cache_file}'")
+
+    # --- PART B: HEATMAP (OPTIONAL - COMMENT OUT AFTER YOU SAVE IT ONCE) ---
+    create_heatmap(top_candidates, filtered_expression, tcga_tumor)
+
+    # --- PART C: CLINICAL SURVIVAL & STRING PPI HUB FILTERING ---
+    patient_df = load_clean_clinical(os.path.join("data", "clinical.cart.2026-01-17", "clinical.tsv"))
+    
+    prognostic_df, merged_meta = run_survival_screen(
+        filtered_expression, tcga_tumor, annotated_de, patient_df, top_n=150
+    )
+    print("\n--- TOP PROGNOSTIC DRIVERS (KM + MULTIVARIATE COX) ---")
+    print(prognostic_df.head(15).to_string(index=False))
+
+    if not prognostic_df.empty:
+        hub_df = query_string_hubs(prognostic_df["symbol"].tolist())
+        final_targets = pd.merge(prognostic_df, hub_df, on="symbol").sort_values(
+            by=["ppi_degree", "cox_multivar_p"], ascending=[False, True]
+        )
+        final_targets.to_csv("results/LUAD_final_docking_targets.csv", index=False)
+        print("\n--- FINAL PRIORITIZED DRUG TARGETS (DEG + SURVIVAL + PPI HUB) ---")
+        print(final_targets.head(10).to_string(index=False))
