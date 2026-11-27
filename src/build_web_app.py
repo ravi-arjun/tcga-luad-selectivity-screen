@@ -35,29 +35,47 @@ def build_static_site(out_dir="docs"):
     with open("results/LUAD_web_dashboard_bundle.json", "r") as f:
         docking_bundle = json.load(f)
 
-    docking_df = pd.DataFrame(docking_bundle["docking_results"]).where(
-        pd.notnull(pd.DataFrame(docking_bundle["docking_results"])), None
-    )
+    # Read directly from the regenerated v1.2 Vina selectivity CSV so HTML never goes out of sync
+    vina_csv = "results/LUAD_vina_selectivity_screen.csv"
+    if os.path.exists(vina_csv):
+        docking_df = pd.read_csv(vina_csv)
+    else:
+        docking_df = pd.DataFrame(docking_bundle["docking_results"])
+    docking_df = docking_df.where(pd.notnull(docking_df), None)
+
     foldseek_df = pd.read_csv("results/LUAD_foldseek_offtargets.csv")
     foldseek_df = foldseek_df.where(pd.notnull(foldseek_df), None)
 
     # Read exact survival summary dynamically from regenerated survival screen CSV
     surv_csv = "results/LUAD_all_survival_screen.csv"
-    n_nominal = 42
-    n_fdr_km = 24
+    n_tested = 0
+    n_nominal = 0
+    n_fdr_km = 0
     if os.path.exists(surv_csv):
         sdf = pd.read_csv(surv_csv)
-        padj_col = sdf["km_logrank_padj"] if "km_logrank_padj" in sdf.columns else multipletests(sdf["km_logrank_p"], method="fdr_bh")[1]
+        n_tested = int(sdf["km_logrank_p"].notna().sum())
+        padj_col = sdf["km_logrank_padj"] if "km_logrank_padj" in sdf.columns else multipletests(sdf["km_logrank_p"].dropna(), method="fdr_bh")[1]
         n_nominal = int(((sdf["km_logrank_p"] < 0.05) & (sdf["cox_HR"] > 1.0)).sum())
         n_fdr_km = int(((padj_col < 0.10) & (sdf["cox_HR"] > 1.0)).sum())
 
-    # Compute exact top dS_Vina candidate dynamically from actual Vina screen CSV
-    best_row = docking_df.sort_values("delta_S_vina").iloc[0]
+    # Compute exact top ATP-competitive dS_Vina candidate (excluding non-ATP-competitive Rigosertib)
+    atp_df = docking_df[docking_df["atp_competitive"] == True].copy() if "atp_competitive" in docking_df.columns else docking_df.copy()
+    best_row = atp_df.sort_values("delta_S_vina").iloc[0]
     best_ds_str = f"{best_row['delta_S_vina']:+.2f} (&Delta;S<sub>Vina</sub>)"
-    best_ds_lbl = f"Top Pocket-Aligned Score Margin ({best_row['ligand']} on {best_row['primary_target']})"
+    best_ds_lbl = f"Top ATP-Pocket Margin ({best_row['ligand']} on {best_row['primary_target']})"
 
     with open("results/LUAD_docking_pockets.json", "r") as f:
         pockets = json.load(f)
+
+    redock = pockets.get("positive_control_redocking", {})
+    redock_rmsd = redock.get("heavy_atom_rmsd_A", "N/A")
+    redock_score = redock.get("vina_score", "N/A")
+    redock_passed = redock.get("passed", False)
+    redock_summary = (
+        f"PASSED ({redock_rmsd} &Aring; &le; 2.00 &Aring;)"
+        if redock_passed
+        else f"Did not pass ({redock_rmsd} &Aring; &gt; 2.00 &Aring;; score {redock_score}) &mdash; flexible tail shift in rigid receptor"
+    )
 
     structures_3d = {
         "NEK2_receptor": pdbqt_to_pdb_block("docking/receptors/NEK2_primary.pdbqt"),
@@ -72,7 +90,7 @@ def build_static_site(out_dir="docs"):
     site_payload = {
         "km_curves": km_data,
         "docking_results": docking_df.to_dict(orient="records"),
-        "pocket_contacts": docking_bundle["pocket_contacts"],
+        "pocket_contacts": docking_bundle.get("pocket_contacts", {}),
         "foldseek_offtargets": foldseek_df.to_dict(orient="records"),
         "pockets": pockets,
         "structures_3d": structures_3d,
@@ -94,7 +112,7 @@ def build_static_site(out_dir="docs"):
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TCGA-LUAD Target Prioritization &amp; Computational Selectivity Screen (v1.1)</title>
+  <title>TCGA-LUAD Target Prioritization &amp; Computational Counter-Screen (v1.2)</title>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
   <style>
@@ -108,6 +126,7 @@ def build_static_site(out_dir="docs"):
       --nek2: #f97316;
       --plk1: #a855f7;
       --green: #22c55e;
+      --amber: #f59e0b;
     }}
     * {{ box-sizing: border-box; }}
     body {{
@@ -135,7 +154,7 @@ def build_static_site(out_dir="docs"):
       margin-bottom: 0.6rem;
     }}
     h1 {{ margin: 0 0 0.5rem; font-size: 1.85rem; }}
-    .subtitle {{ color: var(--muted); max-width: 900px; margin: 0 0 1.2rem; font-size: 0.98rem; }}
+    .subtitle {{ color: var(--muted); max-width: 920px; margin: 0 0 1.2rem; font-size: 0.98rem; }}
     .metrics-grid {{
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -181,7 +200,7 @@ def build_static_site(out_dir="docs"):
       border: 1px solid var(--border);
       background: #090d16;
     }}
-    table {{ width: 100%; border-collapse: collapse; font-size: 0.86rem; }}
+    table {{ width: 100%; border-collapse: collapse; font-size: 0.85rem; }}
     th, td {{ padding: 0.55rem 0.65rem; border-bottom: 1px solid var(--border); text-align: left; }}
     th {{ color: var(--muted); font-weight: 600; }}
     .pill-sel {{
@@ -196,6 +215,13 @@ def build_static_site(out_dir="docs"):
       color: #f87171;
       padding: 0.15rem 0.5rem;
       border-radius: 6px;
+    }}
+    .pill-warn {{
+      background: rgba(245, 158, 11, 0.16);
+      color: var(--amber);
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+      font-weight: 600;
     }}
     .contact-chip {{
       display: inline-block;
@@ -224,17 +250,17 @@ def build_static_site(out_dir="docs"):
 <body>
   <header>
     <div class="container">
-      <div class="badge">Computational Oncology &amp; Structure-Guided Target Prioritization (v1.1)</div>
-      <h1>Transcriptomic Target Prioritization &amp; Structure-Guided Computational Screening in TCGA-LUAD</h1>
+      <div class="badge">Computational Oncology &amp; Structure-Guided Target Prioritization (v1.2)</div>
+      <h1>Transcriptomic Target Prioritization &amp; Structure-Guided Computational Counter-Screen in TCGA-LUAD</h1>
       <p class="subtitle">
-        Exploratory computational workflow integrating <strong>PyDESeq2</strong> differential expression (log2FC &gt; 1.5, FDR &lt; 0.01),
-        <strong>Kaplan–Meier / Cox</strong> survival stratification, <strong>STRING</strong> functional network prioritization,
-        <strong>Foldseek</strong> 3D structural analog identification with local ATP-pocket superposition, and multi-seed <strong>AutoDock Vina (&Delta;S<sub>Vina</sub>)</strong> counter-screening.
+        Exploratory computational pipeline integrating <strong>PyDESeq2</strong> differential expression (log<sub>2</sub>FC &gt; 1.5, FDR &lt; 0.01),
+        exploratory <strong>Kaplan–Meier / Cox</strong> survival stratification, <strong>STRING v12</strong> functional association network degree,
+        <strong>Foldseek</strong> 3D structural analog search with local ATP-pocket superposition, and multi-seed <strong>AutoDock Vina (&Delta;S<sub>Vina</sub>)</strong> counter-screening.
       </p>
       <div class="metrics-grid">
-        <div class="metric-card"><div class="metric-val">{n_fdr_km} FDR / {n_nominal} Nom.</div><div class="metric-lbl">Prognostic LUAD Candidates (KM BH q &lt; 0.10 / Nominal p &lt; 0.05)</div></div>
+        <div class="metric-card"><div class="metric-val">{n_fdr_km} FDR / {n_nominal} Nom.</div><div class="metric-lbl">Exploratory Survival Candidates (of {n_tested:,} Upregulated Genes; KM BH q &lt; 0.10)</div></div>
         <div class="metric-card"><div class="metric-val">NEK2 &amp; PLK1</div><div class="metric-lbl">Network-Prioritized Mitotic Kinase Candidates</div></div>
-        <div class="metric-card"><div class="metric-val">5 Analogs + Controls</div><div class="metric-lbl">ATP-Pocket Aligned Off-Targets &amp; Known Clinical Controls</div></div>
+        <div class="metric-card"><div class="metric-val">5 Analogs + Controls</div><div class="metric-lbl">ATP-Pocket Aligned Structural Analogs &amp; Clinical Target Comparators</div></div>
         <div class="metric-card"><div class="metric-val">{best_ds_str}</div><div class="metric-lbl">{best_ds_lbl}</div></div>
       </div>
     </div>
@@ -246,8 +272,8 @@ def build_static_site(out_dir="docs"):
       <div class="controls">
         <label>Primary Target:
           <select id="targetSelect">
-            <option value="NEK2">NEK2 (PDB: 2W5B)</option>
-            <option value="PLK1">PLK1 (PDB: 2OWB)</option>
+            <option value="NEK2">NEK2 (PDB: 2W5B, ATP&gamma;S-bound)</option>
+            <option value="PLK1">PLK1 (PDB: 2OWB, PHA-680626-bound)</option>
           </select>
         </label>
         <label>Cross-Screened Ligand:
@@ -259,7 +285,7 @@ def build_static_site(out_dir="docs"):
       <div class="grid-2">
         <div>
           <div id="viewer3d"></div>
-          <p class="disclaimer">*Predicted rigid-receptor Vina poses represent computational hypotheses rather than experimentally resolved co-crystal structures.</p>
+          <p class="disclaimer">*Predicted rigid-receptor Vina poses represent exploratory computational hypotheses rather than experimentally resolved co-crystal structures.</p>
         </div>
         <div>
           <div id="ligandStatsCard" style="margin-bottom: 1rem;"></div>
@@ -280,24 +306,25 @@ def build_static_site(out_dir="docs"):
         <div id="selectivityPlot" style="height: 390px;"></div>
       </div>
       <div class="card">
-        <h2>3. TCGA-LUAD Overall Survival (Median-Split Kaplan–Meier)</h2>
+        <h2>3. TCGA-LUAD Overall Survival (Exploratory Median-Split Kaplan–Meier)</h2>
         <div class="controls" id="kmGeneButtons"></div>
         <div id="kmPlot" style="height: 345px;"></div>
       </div>
     </div>
 
     <div class="card">
-      <h2>4. Complete Pocket-Aligned Cross-Screening &amp; Physicochemical Matrix</h2>
+      <h2>4. Pocket-Aligned Cross-Screening Matrix (ATP-Competitive Panel &amp; Non-ATP Comparator)</h2>
       <div style="overflow-x: auto;">
         <table id="fullScreenTable">
           <thead>
             <tr>
               <th>Screen Target</th>
+              <th>ATP Rank</th>
               <th>Ligand</th>
-              <th>Established Clinical Target</th>
+              <th>Mechanism / Clinical Status</th>
               <th>S<sub>primary</sub> (Vina)</th>
-              <th>Closest Off-Target</th>
-              <th>S<sub>off-target</sub> (Vina)</th>
+              <th>Closest Comparator</th>
+              <th>S<sub>comp</sub> (Vina)</th>
               <th>&Delta;S<sub>Vina</sub></th>
               <th>MW</th>
               <th>cLogP</th>
@@ -310,17 +337,18 @@ def build_static_site(out_dir="docs"):
     </div>
 
     <div class="card">
-      <h2>5. Methodological Scope &amp; Scientific Qualifications (v1.1)</h2>
+      <h2>5. Methodological Scope, Controls &amp; Scientific Limitations (v1.2)</h2>
       <ul style="color: #cbd5e1; font-size: 0.9rem; margin: 0; padding-left: 1.25rem;">
-        <li><strong>Differential Expression &amp; Survival:</strong> TCGA-LUAD overexpressed candidates (log<sub>2</sub>FC &gt; 1.5, FDR &lt; 0.01) were evaluated using pre-specified median-split Kaplan–Meier log-rank testing as the primary survival screen (42 nominal p &lt; 0.05; 24 survive Benjamini–Hochberg FDR q &lt; 0.10 with HR &gt; 1.0) alongside standardized expression Cox regression. Independent cohort validation is planned for v2.0.</li>
-        <li><strong>Structural Alignment &amp; Controls:</strong> Off-target structures are superposed strictly onto primary ATP-pocket residues (within 10 &Aring; of the co-crystallized ligand), with pocket RMSD, C&alpha; centroid shift, and pocket-to-grid-center distance recorded in <code>LUAD_docking_pockets.json</code>. Both established clinical target controls (<strong>AURKA 1MQ4</strong> and <strong>PLK1 2OWB</strong>) are included in both counter-screens, and co-crystal redocking is verified on <strong>PLK1 2RKU</strong>.</li>
-        <li><strong>Docking Score &amp; Uncertainty Interpretation:</strong> &Delta;S<sub>Vina</sub> = S<sub>primary</sub> &minus; S<sub>best off-target</sub> represents an empirical Vina score differential rather than experimental &Delta;G or validated biochemical selectivity (notably, BI-2536 scores &minus;9.24 on PLK1 vs. &minus;9.56 on PHKG2, &Delta;S<sub>Vina</sub> = +0.32). Three-seed standard deviations quantify Vina search convergence, not scoring-function accuracy.</li>
+        <li><strong>Exploratory Transcriptomic &amp; Survival Screen:</strong> Across {n_tested:,} strongly upregulated protein-coding genes (log<sub>2</sub>FC &gt; 1.5, DESeq2 FDR &lt; 0.01), median-split Kaplan–Meier log-rank testing identified {n_nominal} nominal associations (p &lt; 0.05) and {n_fdr_km} candidates at Benjamini–Hochberg FDR q &lt; 0.10 (HR &gt; 1.0), alongside complete-case multivariable Cox regression adjusted for age, sex, and pathological stage. These represent exploratory survival associations rather than validated clinical biomarkers.</li>
+        <li><strong>STRING v12 Functional Association Network:</strong> Network degree and betweenness centrality quantify functional connectivity (combined confidence score &ge; 0.70, encompassing physical and pathway associations) rather than direct physical binding strength or standalone therapeutic druggability.</li>
+        <li><strong>Positive Control Redocking Audit (PLK1 2RKU + (7R)-BI-2536):</strong> Co-crystal redocking with stereochemically verified (7R)-BI-2536 yielded a symmetry-aware heavy-atom RMSD of <strong>{redock_summary}</strong>. Because this exceeds the standard 2.00 &Aring; pose-recovery benchmark due to flexible tail movement in a rigid receptor, all Vina scores are interpreted strictly as hypothesis-generating rankings rather than validated binding affinities (&Delta;G).</li>
+        <li><strong>Mechanism-Aware Comparator Separation:</strong> <strong>Rigosertib</strong> is flagged as a non-ATP-competitive modulator and excluded from the ATP-pocket selectivity ranking (displayed separately as an external comparator).</li>
       </ul>
     </div>
   </main>
 
   <footer>
-    Developed by Arjun Ravi &bull; B.Tech. Industrial Biotechnology, Anna University &bull; Data: TCGA-LUAD, STRING v12, AlphaFold DB, Foldseek, RCSB PDB
+    Developed by Arjun Ravi &bull; B.Tech. Industrial Biotechnology, Anna University &bull; Data: TCGA-LUAD, STRING v12, AlphaFold DB, Foldseek, RCSB PDB (2W5B, 2OWB, 2RKU, 1MQ4)
   </footer>
 
   <script>
@@ -343,7 +371,7 @@ def build_static_site(out_dir="docs"):
 
       document.getElementById("targetSelect").addEventListener("change", () => {{
         const tgt = document.getElementById("targetSelect").value;
-        document.getElementById("ligandSelect").value = tgt === "NEK2" ? "Alisertib" : "Rigosertib";
+        document.getElementById("ligandSelect").value = tgt === "NEK2" ? "Alisertib" : "BI-2536";
         update3DView();
       }});
       ligSel.addEventListener("change", update3DView);
@@ -385,19 +413,24 @@ def build_static_site(out_dir="docs"):
       glviewer.render();
 
       const row = DATA.docking_results.find(r => r.primary_target === tgt && r.ligand === lig);
-      const isSel = row.delta_S_vina <= -0.5;
+      const isAtp = row.atp_competitive !== false;
+      const pillClass = !isAtp ? "pill-warn" : (row.delta_S_vina <= -0.5 ? "pill-sel" : "pill-non");
+      const pillLabel = !isAtp
+        ? `Non-ATP Comparator (&Delta;S<sub>Vina</sub> = ${{row.delta_S_vina > 0 ? '+' : ''}}${{row.delta_S_vina.toFixed(2)}})`
+        : `&Delta;S<sub>Vina</sub> = ${{row.delta_S_vina > 0 ? '+' : ''}}${{row.delta_S_vina.toFixed(2)}}`;
+
       document.getElementById("ligandStatsCard").innerHTML = `
         <div style="background:#0f172a; padding:0.85rem; border-radius:8px; border:1px solid #334155;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
             <strong style="font-size:1.05rem;">${{lig}} &rarr; ${{tgt}}</strong>
-            <span class="${{isSel ? 'pill-sel' : 'pill-non'}}">&Delta;S<sub>Vina</sub> = ${{row.delta_S_vina > 0 ? '+' : ''}}${{row.delta_S_vina.toFixed(2)}}</span>
+            <span class="${{pillClass}}">${{pillLabel}}</span>
           </div>
           <p style="margin:0.4rem 0 0; font-size:0.84rem; color:#94a3b8;">
-            Established Clinical Target: <strong style="color:#e2e8f0;">${{row.established_target || 'Clinical Kinase Inhibitor'}}</strong>
+            Target / Status: <strong style="color:#e2e8f0;">${{row.established_target || 'Kinase Inhibitor'}}</strong> &mdash; ${{row.clinical_status || ''}}
           </p>
           <p style="margin:0.35rem 0 0; font-size:0.86rem; color:#cbd5e1;">
             Primary Vina Score: <strong>${{row.score_primary_vina.toFixed(2)}}</strong> &bull;
-            Closest Off-Target (${{row.closest_offtarget}}): <strong>${{row.score_closest_offtarget_vina.toFixed(2)}}</strong><br/>
+            Closest Comparator (${{row.closest_offtarget}}): <strong>${{row.score_closest_offtarget_vina.toFixed(2)}}</strong><br/>
             MW: ${{row.MW}} Da &bull; cLogP: ${{row.cLogP}} &bull; TPSA: ${{row.TPSA}} &Aring;&sup2;
           </p>
         </div>
@@ -423,14 +456,14 @@ def build_static_site(out_dir="docs"):
 
     function renderSelectivityQuadrant() {{
       const traces = ["NEK2", "PLK1"].map(tgt => {{
-        const sub = DATA.docking_results.filter(r => r.primary_target === tgt);
+        const sub = DATA.docking_results.filter(r => r.primary_target === tgt && r.atp_competitive !== false);
         return {{
           x: sub.map(r => r.score_primary_vina),
           y: sub.map(r => r.delta_S_vina),
           text: sub.map(r => r.ligand),
           mode: "markers+text",
           textposition: "top center",
-          name: `${{tgt}} Screen`,
+          name: `${{tgt}} ATP-Competitive Panel`,
           marker: {{ size: 11, color: tgt === "PLK1" ? "#a855f7" : "#f97316", line: {{ width: 1, color: "#fff" }} }},
           hovertemplate: "<b>%{{text}}</b> (" + tgt + ")<br>S_primary: %{{x:.2f}}<br>&Delta;S_Vina: %{{y:.2f}}<extra></extra>"
         }};
@@ -441,7 +474,7 @@ def build_static_site(out_dir="docs"):
         plot_bgcolor: "#0f172a",
         font: {{ color: "#e2e8f0" }},
         margin: {{ t: 20, r: 20, b: 48, l: 55 }},
-        xaxis: {{ title: "Primary Vina Score S_primary", gridcolor: "#1e293b" }},
+        xaxis: {{ title: "Primary Vina Score S_primary (ATP-Competitive Panel)", gridcolor: "#1e293b" }},
         yaxis: {{ title: "Score Differential &Delta;S_Vina", gridcolor: "#1e293b" }},
         shapes: [
           {{ type: "line", x0: -10.5, x1: -7, y0: -0.5, y1: -0.5, line: {{ color: "#22c55e", dash: "dash", width: 1.5 }} }},
@@ -499,16 +532,19 @@ def build_static_site(out_dir="docs"):
     function renderFullTable() {{
       const tbody = document.querySelector("#fullScreenTable tbody");
       tbody.innerHTML = DATA.docking_results.map(r => {{
-        const isSel = r.delta_S_vina <= -0.5;
+        const isAtp = r.atp_competitive !== false;
+        const rankStr = isAtp && r.atp_pocket_selectivity_rank ? `#${{Math.round(r.atp_pocket_selectivity_rank)}}` : "Excluded";
+        const pillClass = !isAtp ? "pill-warn" : (r.delta_S_vina <= -0.5 ? "pill-sel" : "pill-non");
         return `
           <tr>
             <td><strong>${{r.primary_target}}</strong></td>
-            <td>${{r.ligand}}</td>
-            <td style="color:#94a3b8;">${{r.established_target || 'N/A'}}</td>
+            <td>${{rankStr}}</td>
+            <td><strong>${{r.ligand}}</strong></td>
+            <td style="color:#94a3b8;">${{r.established_target}} &bull; ${{r.clinical_status}}</td>
             <td>${{r.score_primary_vina.toFixed(2)}}</td>
             <td>${{r.closest_offtarget}}</td>
             <td>${{r.score_closest_offtarget_vina.toFixed(2)}}</td>
-            <td><span class="${{isSel ? 'pill-sel' : 'pill-non'}}">${{r.delta_S_vina > 0 ? '+' : ''}}${{r.delta_S_vina.toFixed(2)}}</span></td>
+            <td><span class="${{pillClass}}">${{r.delta_S_vina > 0 ? '+' : ''}}${{r.delta_S_vina.toFixed(2)}}</span></td>
             <td>${{r.MW}}</td>
             <td>${{r.cLogP}}</td>
             <td>${{r.TPSA}}</td>
@@ -525,7 +561,7 @@ def build_static_site(out_dir="docs"):
     with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as hf:
         hf.write(html_code)
 
-    print(f"[SUCCESS] v1.1 dashboard written to '{out_dir}/index.html' ({os.path.getsize(os.path.join(out_dir, 'index.html')) // 1024} KB)")
+    print(f"[SUCCESS] v1.2 dashboard written to '{out_dir}/index.html' ({os.path.getsize(os.path.join(out_dir, 'index.html')) // 1024} KB)")
 
 
 if __name__ == "__main__":

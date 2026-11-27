@@ -1,11 +1,11 @@
-ligand,established_target,clinical_status,smiles,MW,cLogP,TPSA,HBD,HBA,pdbqt_path
-BI-2536,PLK1,Discontinued after Phase II (PLK1/2/3 inhibitor),CCC1C(=O)N(C)c2nc(Nc3ccc(C(=O)NC4CCN(C)CC4)cc3OC)ncc2N1C1CCCC1,521.67,3.56,102.93,2,8,docking/ligands\BI-2536.pdbqt
-Volasertib,PLK1,Phase III (PLK1 inhibitor),CCC1C(=O)N(C)c2nc(Nc3ccc(C(=O)NC4CCC(N5CCN(CC(C)C)CC5)CC4)cc3OC)ncc2N1C(C)C,620.84,4.51,106.17,2,9,docking/ligands\Volasertib.pdbqt
-Hesperadin,AURKB,Preclinical mitotic tool compound,CCN1CCN(CC(=O)Nc2ccc(C(=C3C(=O)Nc4ccc(S(=O)(=O)CC)cc43)c3ccccc3)cc2)CC1,558.7,3.97,98.82,2,6,docking/ligands\Hesperadin.pdbqt
-Rigosertib,PLK1 / RAS-PI3K pathway,Phase III (non-ATP-competitive modulator),COc1cc(OC)c(CS(=O)(=O)C=Cc2ccc(OC)c(NCC(=O)O)c2)c(OC)c1,451.5,2.8,120.39,2,8,docking/ligands\Rigosertib.pdbqt
-Alisertib,AURKA,Phase III (Aurora A inhibitor),COc1cccc(C2=NCc3cnc(Nc4ccc(C(=O)O)cc4OC)nc3-c3ccc(Cl)cc32)c1F,518.93,5.75,105.93,2,7,docking/ligands\Alisertib.pdbqt
-Barasertib,AURKB,Phase II/III (Aurora B inhibitor),CCN(CC)CC(=O)Nc1ccc(Nc2ncnc3cc(OCCCN4CCN(CCO)CC4)c(OC)cc23)cc1,565.72,3.04,115.32,3,10,docking/ligands\Barasertib.pdbqt
-Dasatinib,ABL1 / SRC,FDA-approved,Cc1nc(Nc2ncc(C(=O)Nc3c(C)cccc3Cl)s2)cc(N2CCN(CCO)CC2)n1,488.02,3.31,106.51,3,9,docking/ligands\Dasatinib.pdbqt
-Erlotinib,EGFR,FDA-approved (NSCLC),COCCOc1cc2ncnc(Nc3cccc(C#C)c3)c2cc1OCCOC,393.44,3.41,74.73,1,7,docking/ligands\Erlotinib.pdbqt
-Sunitinib,VEGFR2 / PDGFRB / KIT,FDA-approved,CCN(CC)CCNC(=O)c1c(C)[nH]c(C=C2C(=O)Nc3ccc(F)cc32)c1C,398.48,3.33,77.23,3,3,docking/ligands\Sunitinib.pdbqt
-Tofacitinib,JAK1 / JAK3,FDA-approved,CC1CCN(C(=O)CC#N)CC1N(C)c1ncnc2[nH]ccc12,312.38,1.54,88.91,1,5,docking/ligands\Tofacitinib.pdbqt
+ligand,established_target,atp_competitive,stereochemistry,clinical_status,smiles,MW,cLogP,TPSA,HBD,HBA,pdbqt_path
+BI-2536,PLK1,True,(7R)-enantiomer (matches RCSB ligand R78 in PDB 2RKU),Discontinued after Phase II (2009–2011; PLK1/2/3 inhibitor),CC[C@@H]1C(=O)N(C)c2nc(Nc3ccc(C(=O)NC4CCN(C)CC4)cc3OC)ncc2N1C1CCCC1,521.67,3.56,102.93,2,8,docking/ligands\BI-2536.pdbqt
+Volasertib,PLK1,True,"(7R)-enantiomer with trans-1,4-cyclohexyl linker",Phase III POLO-AML-2 did not meet OS endpoint (2016); discontinued,CC[C@@H]1C(=O)N(C)c2nc(Nc3ccc(C(=O)N[C@H]4CC[C@H](N5CCN(CC(C)C)CC5)CC4)cc3OC)ncc2N1C(C)C,620.84,4.51,106.17,2,9,docking/ligands\Volasertib.pdbqt
+Hesperadin,AURKB,True,Z-oxindole isomer (achiral),Preclinical mitotic tool compound,CCN1CCN(CC(=O)Nc2ccc(C(=C3C(=O)Nc4ccc(S(=O)(=O)CC)cc43)c3ccccc3)cc2)CC1,558.7,3.97,98.82,2,6,docking/ligands\Hesperadin.pdbqt
+Rigosertib,RAS-PI3K / PLK1 pathway,False,(E)-styryl sulfone isomer,Phase III INSPIRE HR-MDS trial did not meet OS endpoint (2020); non-ATP-competitive modulator,COc1cc(OC)c(CS(=O)(=O)/C=C/c2ccc(OC)c(NCC(=O)O)c2)c(OC)c1,451.5,2.8,120.39,2,8,docking/ligands\Rigosertib.pdbqt
+Alisertib,AURKA,True,Achiral benzazepine scaffold,Phase III Lumiere PTCL trial discontinued (2019); active in Phase II solid-tumor trials,COc1cccc(C2=NCc3cnc(Nc4ccc(C(=O)O)cc4OC)nc3-c3ccc(Cl)cc32)c1F,518.93,5.75,105.93,2,7,docking/ligands\Alisertib.pdbqt
+Barasertib,AURKB,True,Achiral quinazoline scaffold,Phase II/III AML trials completed (2013); development discontinued,CCN(CC)CC(=O)Nc1ccc(Nc2ncnc3cc(OCCCN4CCN(CCO)CC4)c(OC)cc23)cc1,565.72,3.04,115.32,3,10,docking/ligands\Barasertib.pdbqt
+Dasatinib,ABL1 / SRC,True,Achiral thiazole-carboxamide scaffold,FDA-approved (2006; CML / Ph+ ALL),Cc1nc(Nc2ncc(C(=O)Nc3c(C)cccc3Cl)s2)cc(N2CCN(CCO)CC2)n1,488.02,3.31,106.51,3,9,docking/ligands\Dasatinib.pdbqt
+Erlotinib,EGFR,True,Achiral quinazoline scaffold,FDA-approved (2004; EGFR-mutant NSCLC),COCCOc1cc2ncnc(Nc3cccc(C#C)c3)c2cc1OCCOC,393.44,3.41,74.73,1,7,docking/ligands\Erlotinib.pdbqt
+Sunitinib,VEGFR2 / PDGFRB / KIT,True,(Z)-indolin-2-one isomer,FDA-approved (2006; RCC / GIST / pNET),CCN(CC)CCNC(=O)c1c(C)[nH]c(/C=C2\C(=O)Nc3ccc(F)cc32)c1C,398.48,3.33,77.23,3,3,docking/ligands\Sunitinib.pdbqt
+Tofacitinib,JAK1 / JAK3,True,"(3R,4R)-enantiomer (matches clinical citrate salt)",FDA-approved (2012; RA / PsA / UC),C[C@@H]1CCN(C(=O)CC#N)C[C@@H]1N(C)c1ncnc2[nH]ccc12,312.38,1.54,88.91,1,5,docking/ligands\Tofacitinib.pdbqt

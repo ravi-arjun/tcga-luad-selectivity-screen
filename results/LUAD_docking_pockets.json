@@ -2,6 +2,7 @@
   "targets": {
     "NEK2": {
       "holo_pdb": "structures/targets/NEK2_2W5B.pdb",
+      "pdb_description": "PDB 2W5B: Human NEK2 kinase bound to ATPgammaS",
       "grid_center": [
         26.506,
         12.869,
@@ -19,6 +20,7 @@
     },
     "PLK1": {
       "holo_pdb": "structures/targets/PLK1_2OWB.pdb",
+      "pdb_description": "PDB 2OWB: Human PLK1 kinase bound to PHA-680626",
       "grid_center": [
         -0.14,
         24.376,
@@ -39,11 +41,10 @@
     "NEK2": {
       "NEK4": {
         "pocket_rmsd_A": 1.732,
-        "ca_centroid_diff_A": 0.0,
         "pocket_to_grid_center_A": 2.861,
         "matched_pocket_residues": 54,
         "pocket_seq_id_pct": 55.6,
-        "rationale": "Foldseek paralog",
+        "rationale": "Foldseek structural analog",
         "receptor_prep": {
           "rdkit_sanitized": true,
           "polar_HD_atoms": 1602
@@ -51,11 +52,10 @@
       },
       "NEK7": {
         "pocket_rmsd_A": 2.212,
-        "ca_centroid_diff_A": 0.0,
         "pocket_to_grid_center_A": 2.931,
         "matched_pocket_residues": 56,
         "pocket_seq_id_pct": 44.6,
-        "rationale": "Foldseek paralog",
+        "rationale": "Foldseek structural analog",
         "receptor_prep": {
           "rdkit_sanitized": true,
           "polar_HD_atoms": 544
@@ -63,11 +63,10 @@
       },
       "NEK8": {
         "pocket_rmsd_A": 2.391,
-        "ca_centroid_diff_A": 0.0,
         "pocket_to_grid_center_A": 2.931,
         "matched_pocket_residues": 56,
         "pocket_seq_id_pct": 41.1,
-        "rationale": "Foldseek paralog",
+        "rationale": "Foldseek structural analog",
         "receptor_prep": {
           "rdkit_sanitized": true,
           "polar_HD_atoms": 1179
@@ -75,11 +74,10 @@
       },
       "PLK1_CTRL": {
         "pocket_rmsd_A": 8.038,
-        "ca_centroid_diff_A": 0.0,
         "pocket_to_grid_center_A": 3.151,
         "matched_pocket_residues": 53,
         "pocket_seq_id_pct": 47.2,
-        "rationale": "Established clinical target control (BI-2536/Volasertib)",
+        "rationale": "Established clinical target comparator (PDB 2OWB, PHA-680626-bound PLK1)",
         "receptor_prep": {
           "rdkit_sanitized": true,
           "polar_HD_atoms": 536
@@ -87,11 +85,10 @@
       },
       "AURKA_CTRL": {
         "pocket_rmsd_A": 4.284,
-        "ca_centroid_diff_A": 0.0,
         "pocket_to_grid_center_A": 2.865,
         "matched_pocket_residues": 53,
         "pocket_seq_id_pct": 41.5,
-        "rationale": "Established clinical target control (Alisertib)",
+        "rationale": "Established clinical target comparator (PDB 1MQ4, ADP-bound AURKA)",
         "receptor_prep": {
           "rdkit_sanitized": true,
           "polar_HD_atoms": 466
@@ -101,7 +98,6 @@
     "PLK1": {
       "PHKG2": {
         "pocket_rmsd_A": 0.884,
-        "ca_centroid_diff_A": 0.0,
         "pocket_to_grid_center_A": 4.045,
         "matched_pocket_residues": 49,
         "pocket_seq_id_pct": 30.6,
@@ -113,7 +109,6 @@
       },
       "RPS6KB1": {
         "pocket_rmsd_A": 1.615,
-        "ca_centroid_diff_A": 0.0,
         "pocket_to_grid_center_A": 4.045,
         "matched_pocket_residues": 49,
         "pocket_seq_id_pct": 42.9,
@@ -125,11 +120,10 @@
       },
       "AURKA_CTRL": {
         "pocket_rmsd_A": 3.01,
-        "ca_centroid_diff_A": 0.0,
         "pocket_to_grid_center_A": 4.045,
         "matched_pocket_residues": 49,
         "pocket_seq_id_pct": 40.8,
-        "rationale": "Established clinical target control (Alisertib)",
+        "rationale": "Established clinical target comparator (PDB 1MQ4, ADP-bound AURKA)",
         "receptor_prep": {
           "rdkit_sanitized": true,
           "polar_HD_atoms": 466
@@ -137,11 +131,10 @@
       },
       "NEK2_CTRL": {
         "pocket_rmsd_A": 6.143,
-        "ca_centroid_diff_A": 0.0,
         "pocket_to_grid_center_A": 4.236,
         "matched_pocket_residues": 46,
         "pocket_seq_id_pct": 41.3,
-        "rationale": "Primary mitotic kinase comparator",
+        "rationale": "Primary mitotic kinase comparator (PDB 2W5B, ATPgammaS-bound NEK2)",
         "receptor_prep": {
           "rdkit_sanitized": true,
           "polar_HD_atoms": 495
@@ -151,12 +144,14 @@
   },
   "positive_control_redocking": {
     "pdb_id": "2RKU",
-    "ligand": "BI-2536 (R78)",
-    "vina_score": -8.872,
-    "heavy_atom_rmsd_A": 6.46,
+    "ligand": "(7R)-BI-2536 (R78)",
+    "vina_score": -9.419,
+    "seed_sd": 0.176,
+    "heavy_atom_rmsd_A": 5.556,
     "matched_heavy_atoms": 35,
     "acceptance_threshold_A": 2.0,
     "passed": false,
+    "status_label": "FAILED (> 2.0 A; rigid-receptor limitation)",
     "pose_file": "docking/poses/CONTROL_PLK1_2RKU_BI2536_redock.pdbqt"
   }
 }
