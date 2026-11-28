@@ -1,0 +1,16 @@
+{
+  "gene_filter_mode": "protein-coding",
+  "n_upregulated_total": 4081,
+  "n_upregulated_eligible": 1946,
+  "n_tested": 1812,
+  "n_valid_km": 1812,
+  "n_km_cohort": 318,
+  "n_cox_complete_case_median": 275,
+  "n_nominal_km_p_lt_0_05_any_direction": 407,
+  "n_nominal_km_p_lt_0_05_hr_gt_1": 334,
+  "n_km_fdr_lt_0_10_any_direction": 250,
+  "n_km_fdr_lt_0_10_hr_gt_1": 221,
+  "n_multivar_cox_p_lt_0_05": 352,
+  "n_multivar_cox_fdr_lt_0_10": 90,
+  "cox_penalizer": 0.0
+}

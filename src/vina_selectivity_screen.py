@@ -14,21 +14,27 @@ from meeko import MoleculePreparation, PDBQTWriterLegacy
 
 VINA_EXE = os.path.join("bin", "vina.exe")
 
-# Verified isomeric SMILES (PubChem / RCSB PDB ligand definitions) and dated trial statuses
+# Comparators whose ATP-pocket superposition onto the primary target is worse than this (C-alpha RMSD, Angstrom)
+# are still docked and reported, but are EXCLUDED from the delta-S margin because the same rigid box does not
+# sample an equivalent pocket geometry.
+MAX_COMPARATOR_POCKET_RMSD = 3.0
+
+# Isomeric SMILES (PubChem / RCSB PDB ligand definitions). Clinical-status strings are deliberately coarse
+# (approved vs. investigational) because dated trial outcomes must be verified against primary sources before being added.
 LIGAND_LIBRARY = {
     "BI-2536": {
         "smiles": "CC[C@@H]1C(=O)N(C)c2nc(Nc3ccc(C(=O)NC4CCN(C)CC4)cc3OC)ncc2N1C1CCCC1",
         "stereochemistry_note": "(7R)-enantiomer (matches RCSB ligand R78 in PDB 2RKU)",
         "established_target": "PLK1",
         "atp_competitive": True,
-        "clinical_status": "Discontinued after Phase II (2009–2011; PLK1/2/3 inhibitor)",
+        "clinical_status": "Investigational (clinical trials); not approved; development discontinued",
     },
     "Volasertib": {
         "smiles": "CC[C@@H]1C(=O)N(C)c2nc(Nc3ccc(C(=O)N[C@H]4CC[C@H](N5CCN(CC(C)C)CC5)CC4)cc3OC)ncc2N1C(C)C",
         "stereochemistry_note": "(7R)-enantiomer with trans-1,4-cyclohexyl linker",
         "established_target": "PLK1",
         "atp_competitive": True,
-        "clinical_status": "Phase III POLO-AML-2 did not meet OS endpoint (2016); discontinued",
+        "clinical_status": "Investigational (reached Phase III in AML); not approved",
     },
     "Hesperadin": {
         "smiles": "CCN1CCN(CC(=O)Nc2ccc(C(=C3C(=O)Nc4ccc(S(=O)(=O)CC)cc43)c3ccccc3)cc2)CC1",
@@ -42,21 +48,21 @@ LIGAND_LIBRARY = {
         "stereochemistry_note": "(E)-styryl sulfone isomer",
         "established_target": "RAS-PI3K / PLK1 pathway",
         "atp_competitive": False,
-        "clinical_status": "Phase III INSPIRE HR-MDS trial did not meet OS endpoint (2020); non-ATP-competitive modulator",
+        "clinical_status": "Investigational; Phase III INSPIRE (HR-MDS) did not meet its OS endpoint (2020); non-ATP-competitive modulator",
     },
     "Alisertib": {
         "smiles": "COc1cccc(C2=NCc3cnc(Nc4ccc(C(=O)O)cc4OC)nc3-c3ccc(Cl)cc32)c1F",
         "stereochemistry_note": "Achiral benzazepine scaffold",
         "established_target": "AURKA",
         "atp_competitive": True,
-        "clinical_status": "Phase III Lumiere PTCL trial discontinued (2019); active in Phase II solid-tumor trials",
+        "clinical_status": "Investigational; not approved",
     },
     "Barasertib": {
         "smiles": "CCN(CC)CC(=O)Nc1ccc(Nc2ncnc3cc(OCCCN4CCN(CCO)CC4)c(OC)cc23)cc1",
         "stereochemistry_note": "Achiral quinazoline scaffold",
         "established_target": "AURKB",
         "atp_competitive": True,
-        "clinical_status": "Phase II/III AML trials completed (2013); development discontinued",
+        "clinical_status": "Investigational (AML trials); not approved",
     },
     "Dasatinib": {
         "smiles": "Cc1nc(Nc2ncc(C(=O)Nc3c(C)cccc3Cl)s2)cc(N2CCN(CCO)CC2)n1",
@@ -117,6 +123,17 @@ TARGET_CONFIG = {
         ],
     },
 }
+
+
+def get_vina_version():
+    """Return the version string reported by the Vina executable (so reports never hardcode it)."""
+    try:
+        out = subprocess.run([VINA_EXE, "--version"], capture_output=True, text=True, check=True)
+        txt = (out.stdout + out.stderr).strip()
+        m = re.search(r"(\d+\.\d+\.\d+)", txt)
+        return m.group(1) if m else txt.splitlines()[0]
+    except Exception as e:
+        return f"unknown ({e})"
 
 
 def ensure_control_structures():
@@ -449,8 +466,33 @@ def validate_cocrystal_redocking(bi2536_pdbqt):
 
     rmsd = round(best_rmsd, 3)
     passed = bool(rmsd <= 2.0)
-    status_lbl = "PASSED (<= 2.0 A)" if passed else "FAILED (> 2.0 A; rigid-receptor limitation)"
-    print(f"[POSITIVE CONTROL] PLK1 (2RKU) + (7R)-BI-2536 Redocking: Score = {mean_s:.2f} +/- {sd_s:.2f}, Heavy-Atom RMSD = {rmsd:.3f} A -> {status_lbl}\n")
+    status_lbl = "PASSED (<= 2.0 A)" if passed else "FAILED (> 2.0 A)"
+
+    # Diagnostic: split the RMSD (best symmetry mapping) into ring atoms vs. non-ring (substituent/tail) atoms
+    Chem.FastFindRings(cryst_mol)
+    best_map, best_val = None, np.inf
+    for cm in cryst_matches:
+        val = float(np.sqrt(np.mean([
+            np.sum((np.array(cryst_conf.GetAtomPosition(ci)) - np.array(dock_conf.GetAtomPosition(di))) ** 2)
+            for ci, di in zip(cm, dock_match)
+        ])))
+        if val < best_val:
+            best_val, best_map = val, cm
+    ring_sq, chain_sq = [], []
+    for ci, di in zip(best_map, dock_match):
+        d2 = float(np.sum((np.array(cryst_conf.GetAtomPosition(ci)) - np.array(dock_conf.GetAtomPosition(di))) ** 2))
+        (ring_sq if cryst_mol.GetAtomWithIdx(ci).IsInRing() else chain_sq).append(d2)
+    ring_rmsd = round(float(np.sqrt(np.mean(ring_sq))), 3) if ring_sq else None
+    nonring_rmsd = round(float(np.sqrt(np.mean(chain_sq))), 3) if chain_sq else None
+    if passed:
+        diagnosis = "Pose recovered within 2.0 A."
+    elif ring_rmsd is not None and ring_rmsd <= 2.0:
+        diagnosis = f"Ring atoms recovered ({ring_rmsd} A); the deviation arises from non-ring substituent atoms ({nonring_rmsd} A)."
+    else:
+        diagnosis = f"Ring atoms were also not recovered ({ring_rmsd} A); failure is not confined to flexible substituents (cause not diagnosed)."
+    n_ligand_heavy = int(cryst_mol.GetNumAtoms())
+    print(f"[POSITIVE CONTROL] PLK1 (2RKU) + (7R)-BI-2536 Redocking: Score = {mean_s:.2f} +/- {sd_s:.2f}, Heavy-Atom RMSD = {rmsd:.3f} A "
+          f"({len(dock_match)}/{n_ligand_heavy} heavy atoms matched; ring {ring_rmsd} A, non-ring {nonring_rmsd} A) -> {status_lbl}\n{diagnosis}\n")
     return {
         "pdb_id": "2RKU",
         "ligand": "(7R)-BI-2536 (R78)",
@@ -458,6 +500,10 @@ def validate_cocrystal_redocking(bi2536_pdbqt):
         "seed_sd": sd_s,
         "heavy_atom_rmsd_A": rmsd,
         "matched_heavy_atoms": len(dock_match),
+        "ligand_heavy_atoms": n_ligand_heavy,
+        "ring_atom_rmsd_A": ring_rmsd,
+        "nonring_atom_rmsd_A": nonring_rmsd,
+        "diagnosis": diagnosis,
         "acceptance_threshold_A": 2.0,
         "passed": passed,
         "status_label": status_lbl,
@@ -471,22 +517,29 @@ if __name__ == "__main__":
     os.makedirs("results", exist_ok=True)
 
     ensure_control_structures()
+    vina_version = get_vina_version()
+    print(f"AutoDock Vina version: {vina_version}")
 
     print("1. Preparing stereochemically verified 3D ligand panel (RDKit ETKDGv3 + MMFF94 + Meeko)...")
     lig_df = prepare_ligands()
     lig_df.to_csv("results/LUAD_ligand_physicochemical_descriptors.csv", index=False)
 
     all_docking_rows = []
-    pocket_metadata = {"targets": {}, "alignments": {}}
+    pocket_metadata = {"vina_version": vina_version, "max_comparator_pocket_rmsd_A": MAX_COMPARATOR_POCKET_RMSD,
+                       "targets": {}, "alignments": {}}
 
     for target_sym, cfg in TARGET_CONFIG.items():
-        center, _, _ = extract_holo_ligand_info(cfg["holo_pdb"], cfg["chain"])
+        center, _, holo_res = extract_holo_ligand_info(cfg["holo_pdb"], cfg["chain"])
+        holo_resname = holo_res.resname.strip() if holo_res is not None else None
+        if holo_resname is None:
+            print(f"[WARN] No co-crystal ligand found in {cfg['holo_pdb']}; grid centered on C-alpha centroid.")
         primary_rec_pdbqt = f"docking/receptors/{target_sym}_primary.pdbqt"
         prep_stats = pdb_to_receptor_pdbqt_protonated(cfg["holo_pdb"], primary_rec_pdbqt, cfg["chain"])
 
         pocket_metadata["targets"][target_sym] = {
             "holo_pdb": cfg["holo_pdb"],
             "pdb_description": cfg["pdb_description"],
+            "holo_ligand_resname": holo_resname,
             "grid_center": center,
             "box_size": [20, 20, 20],
             "receptor_prep": prep_stats,
@@ -530,9 +583,16 @@ if __name__ == "__main__":
                 s_off, _ = run_vina_multiseed(off_pdbqt, lig_pdbqt, center, off_pose)
                 off_scores[off_sym] = s_off
 
-            best_off_sym = min(off_scores, key=off_scores.get)
-            best_off_score = off_scores[best_off_sym]
+            # Reliable comparators = pocket-aligned within MAX_COMPARATOR_POCKET_RMSD; all are still reported
+            reliable = {k: v for k, v in off_scores.items()
+                        if np.isfinite(v) and pocket_metadata["alignments"][target_sym][k]["pocket_rmsd_A"] <= MAX_COMPARATOR_POCKET_RMSD}
+            if not reliable:
+                raise RuntimeError(f"No comparator for {target_sym} has pocket RMSD <= {MAX_COMPARATOR_POCKET_RMSD} A")
+            best_off_sym = min(reliable, key=reliable.get)
+            best_off_score = reliable[best_off_sym]
             delta_s_vina = round(s_primary - best_off_score, 3)
+            best_all_sym = min(off_scores, key=off_scores.get)
+            delta_s_all = round(s_primary - off_scores[best_all_sym], 3)
 
             row_data = {
                 "primary_target": target_sym,
@@ -542,9 +602,12 @@ if __name__ == "__main__":
                 "clinical_status": lrow["clinical_status"],
                 "score_primary_vina": s_primary,
                 "seed_sd_vina": sd_primary,
-                "closest_offtarget": best_off_sym,
-                "score_closest_offtarget_vina": best_off_score,
+                "best_scoring_comparator": best_off_sym,
+                "score_best_comparator_vina": best_off_score,
                 "delta_S_vina": delta_s_vina,
+                "comparators_used": ";".join(sorted(reliable)),
+                "best_scoring_comparator_all": best_all_sym,
+                "delta_S_vina_all_comparators": delta_s_all,
                 "MW": lrow["MW"],
                 "cLogP": lrow["cLogP"],
                 "TPSA": lrow["TPSA"],
@@ -575,9 +638,9 @@ if __name__ == "__main__":
     with open("results/LUAD_docking_pockets.json", "w") as jf:
         json.dump(pocket_metadata, jf, indent=2)
 
-    print("\n--- V1.2 COUNTER-SCREENING SUMMARY (ATP-COMPETITIVE PANEL + RIGOSERTIB COMPARATOR) ---")
+    print("\n--- COUNTER-SCREENING SUMMARY (ATP-COMPETITIVE PANEL + RIGOSERTIB COMPARATOR; dS = S_primary - best-scoring pocket-aligned comparator) ---")
     print(
         results_df[
-            ["primary_target", "ligand", "atp_competitive", "atp_pocket_selectivity_rank", "score_primary_vina", "closest_offtarget", "score_closest_offtarget_vina", "delta_S_vina"]
+            ["primary_target", "ligand", "atp_competitive", "atp_pocket_selectivity_rank", "score_primary_vina", "best_scoring_comparator", "score_best_comparator_vina", "delta_S_vina"]
         ].to_string(index=False)
     )

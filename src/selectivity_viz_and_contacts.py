@@ -108,7 +108,7 @@ def build_selectivity_plots_and_contacts(
     ax1.axvspan(-10.5, -8.5, ymin=0, ymax=0.35, color="#2ecc71", alpha=0.08)
     ax1.set_title("A. Vina Docking Score vs. Pocket-Aligned Off-Target Differential", fontsize=12, weight="bold")
     ax1.set_xlabel("Primary Target Vina Score S_primary  [More Negative = Stronger]", fontsize=10)
-    ax1.set_ylabel("Score Differential dS_Vina = S_primary - S_best_offtarget", fontsize=10)
+    ax1.set_ylabel("Score Differential dS_Vina = S_primary - S_best-scoring pocket-aligned comparator", fontsize=10)
     ax1.grid(True, linestyle="--", alpha=0.3)
     ax1.legend(loc="upper left", fontsize=8.5)
 
@@ -120,8 +120,8 @@ def build_selectivity_plots_and_contacts(
     nek2_ds = [df[(df["primary_target"] == "NEK2") & (df["ligand"] == l)]["delta_S_vina"].values[0] for l in ligands]
     plk1_ds = [df[(df["primary_target"] == "PLK1") & (df["ligand"] == l)]["delta_S_vina"].values[0] for l in ligands]
 
-    ax2.bar(x - width / 2, nek2_ds, width, label="NEK2 vs. NEK4/7/8 + PLK1_CTRL", color="#e67e22", edgecolor="black")
-    ax2.bar(x + width / 2, plk1_ds, width, label="PLK1 vs. PHKG2/RPS6KB1 + AURKA_CTRL", color="#8e44ad", edgecolor="black")
+    ax2.bar(x - width / 2, nek2_ds, width, label="NEK2 vs. pocket-aligned comparators", color="#e67e22", edgecolor="black")
+    ax2.bar(x + width / 2, plk1_ds, width, label="PLK1 vs. pocket-aligned comparators", color="#8e44ad", edgecolor="black")
     ax2.axhline(0, color="black", linewidth=1)
     ax2.axhline(-0.5, color="#27ae60", linestyle="--", linewidth=1.1)
     ax2.set_xticks(x)
@@ -133,9 +133,11 @@ def build_selectivity_plots_and_contacts(
 
     plt.tight_layout()
     plt.savefig(out_png, dpi=300, bbox_inches="tight")
-    print(f"\nSaved v1.1 selectivity summary figure to '{out_png}'")
+    print(f"\nSaved selectivity summary figure to '{out_png}'")
 
     bundle = {
+        "generated_from": screen_csv,
+        "generated_from_mtime": os.path.getmtime(screen_csv),
         "docking_results": df.to_dict(orient="records"),
         "pocket_contacts": contact_summary,
     }

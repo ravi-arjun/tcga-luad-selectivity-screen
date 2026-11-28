@@ -36,10 +36,11 @@ def load_metadata(metadata_path):
     metadata = metadata[["samples.submitter_id", "samples.sample_type"]].copy()
 
     # Explicitly classify Primary Tumor vs. Solid Tissue Normal; exclude other sample types
+    # NOTE: np.where(..., "str", np.nan) coerces NaN to the *string* "nan", which dropna() does not remove,
+    # so a dict map (unmapped -> real NaN) is used instead.
     sample_type_clean = metadata["samples.sample_type"].astype(str).str.strip()
-    metadata["condition"] = np.where(
-        sample_type_clean == "Primary Tumor", "tumor",
-        np.where(sample_type_clean == "Solid Tissue Normal", "normal", np.nan)
+    metadata["condition"] = sample_type_clean.map(
+        {"Primary Tumor": "tumor", "Solid Tissue Normal": "normal"}
     )
     metadata = metadata.dropna(subset=["condition"]).copy()
     metadata = metadata[["samples.submitter_id", "condition"]].rename(
@@ -72,6 +73,55 @@ def build_sample_map(expression_matrix, files):
     return sample_map
 
 
+def validate_sample_mapping(sample_map, tcga_tumor):
+    """
+    Checks whether multiple expression files map to the same
+    biological TCGA sample before differential expression analysis.
+    """
+
+    # Check whether a GDC file has been mapped more than once
+    duplicate_files = sample_map[
+        sample_map.duplicated(subset=["file_id"], keep=False)
+    ]
+
+    if not duplicate_files.empty:
+        duplicate_files.to_csv(
+            "results/duplicate_gdc_file_ids.csv", index=False
+        )
+        raise ValueError(
+            "Duplicate GDC file IDs detected. "
+            "Check results/duplicate_gdc_file_ids.csv"
+        )
+
+    # Check whether multiple files represent the same TCGA sample
+    duplicate_samples = tcga_tumor[
+        tcga_tumor.duplicated(subset=["tcga_id"], keep=False)
+    ].copy()
+
+    if not duplicate_samples.empty:
+        duplicate_samples = duplicate_samples.sort_values("tcga_id")
+
+        duplicate_samples.to_csv(
+            "results/duplicate_tcga_samples.csv", index=False
+        )
+
+        print("\nDuplicate biological samples detected:")
+        print(
+            duplicate_samples[
+                ["tcga_id", "sample_id", "file_id", "condition"]
+            ].to_string(index=False)
+        )
+
+        raise ValueError(
+            f"{duplicate_samples['tcga_id'].nunique()} TCGA samples "
+            "have multiple expression files. Resolve these before DESeq2."
+        )
+
+    print("\nSample mapping validation passed.")
+    print(f"Unique biological samples: {tcga_tumor['tcga_id'].nunique()}")
+
+
+
 def run_pipeline(cancer_type, raw_path, metadata_path, metadata_json):
     print(f"Running {cancer_type} Stage 1 ingestion...")
     expression_matrix, files = build_expression_matrix(raw_path)
@@ -81,10 +131,17 @@ def run_pipeline(cancer_type, raw_path, metadata_path, metadata_json):
     file_lookup = build_file_lookup(metadata_json)
     sample_map = build_sample_map(expression_matrix, files)
     sample_map = sample_map.merge(file_lookup, on="file_id", how="left")
-    tcga_tumor = sample_map.merge(metadata, on="tcga_id", how="inner")
+    
+    tcga_tumor = sample_map.merge(metadata,on="tcga_id", how="inner",validate="many_to_one")
 
-    # Restrict expression matrix strictly to verified Primary Tumor and Solid Tissue Normal samples
-    expression_matrix = expression_matrix[tcga_tumor["sample_id"]].copy()
+    # Validate biological sample independence before DESeq2
+    validate_sample_mapping(sample_map, tcga_tumor)
+
+    # Retain only verified samples
+    expression_matrix = expression_matrix[
+    tcga_tumor["sample_id"]
+    ].copy()
+
     return expression_matrix, metadata, sample_map, tcga_tumor
 
 
@@ -126,13 +183,35 @@ def differential_expression(filtered_raw_counts, tcga_tumor):
     return results
 
 
+def differential_expression_paired(filtered_raw_counts, tcga_tumor):
+    """
+    Sensitivity analysis: restricts to patients with BOTH a primary-tumor and a solid-tissue-normal sample and
+    adds a patient term (design ~ patient + condition). The main analysis (differential_expression) treats all
+    samples as independent even though ~50 patients contribute a tumor/normal pair.
+    """
+    t = tcga_tumor.copy()
+    t["patient_id"] = t["tcga_id"].astype(str).str[:12]
+    both = t.groupby("patient_id")["condition"].nunique()
+    paired_patients = both[both == 2].index
+    t = t[t["patient_id"].isin(paired_patients)]
+    t = t.drop_duplicates(subset=["patient_id", "condition"])
+    valid = [s for s in t["sample_id"] if s in filtered_raw_counts.columns]
+    counts_df = filtered_raw_counts[valid].T.round().astype(int)
+    meta = t.set_index("sample_id").loc[valid][["patient_id", "condition"]]
+    dds = DeseqDataSet(counts=counts_df, metadata=meta, design_factors=["patient_id", "condition"], ref_level=["condition", "normal"])
+    dds.deseq2()
+    stat_res = DeseqStats(dds, contrast=["condition", "tumor", "normal"])
+    stat_res.summary()
+    return stat_res.results_df
+
+
 def annotate_genes(de_results):
     print("\nMapping Ensembl IDs to Gene Symbols via MyGene...")
     mg = mygene.MyGeneInfo()
     gene_info = mg.querymany(
         de_results.index.tolist(),
         scopes="ensembl.gene",
-        fields=["symbol", "name"],
+        fields=["symbol", "name", "type_of_gene"],
         species="human",
         as_dataframe=True,
     )
@@ -140,8 +219,24 @@ def annotate_genes(de_results):
 
     df = de_results.copy()
     df["symbol"] = gene_info["symbol"].reindex(df.index)
+    df["gene_type"] = gene_info["type_of_gene"].reindex(df.index) if "type_of_gene" in gene_info.columns else np.nan
+    # Unannotated genes keep their Ensembl ID as a placeholder label ONLY; downstream steps must not treat
+    # these placeholders as gene symbols (see is_annotated_symbol in survival_and_hubs.py).
     df["symbol"] = df["symbol"].fillna(pd.Series(df.index, index=df.index))
     return df
+
+
+def add_gene_type(annotated_de):
+    """Adds a 'gene_type' (mygene type_of_gene, e.g. 'protein-coding') column to an annotated DE table that lacks it."""
+    mg = mygene.MyGeneInfo()
+    info = mg.querymany(
+        annotated_de.index.astype(str).tolist(), scopes="ensembl.gene",
+        fields=["type_of_gene"], species="human", as_dataframe=True,
+    )
+    info = info[~info.index.duplicated(keep="first")]
+    out = annotated_de.copy()
+    out["gene_type"] = info["type_of_gene"].reindex(out.index) if "type_of_gene" in info.columns else np.nan
+    return out
 
 
 def get_top_overexpressed_genes(annotated_de, n_top=25):
@@ -210,6 +305,11 @@ if __name__ == "__main__":
         de_results = differential_expression(filtered_raw, tcga_tumor)
         annotated_de = annotate_genes(de_results)
         annotated_de.to_csv("results/LUAD_DESeq2_annotated.csv")
+        try:
+            paired = differential_expression_paired(filtered_raw, tcga_tumor)
+            paired.to_csv("results/LUAD_DESeq2_paired_sensitivity.csv")
+        except Exception as e:  # sensitivity analysis only; never blocks the main pipeline
+            print(f"[WARN] Paired sensitivity analysis skipped: {e}")
         top_candidates = get_top_overexpressed_genes(annotated_de, n_top=25)
         with open(cache_file, "wb") as f:
             pickle.dump({
@@ -219,6 +319,21 @@ if __name__ == "__main__":
                 "top_candidates": top_candidates,
             }, f)
         print(f"Saved Stage 1 cache to '{cache_file}'")
+
+    if "gene_type" not in annotated_de.columns or annotated_de["gene_type"].isna().all():
+        print("[INFO] Cached DE table has no gene_type; querying MyGene for biotype (needs network)...")
+        try:
+            annotated_de = add_gene_type(annotated_de)
+            annotated_de.to_csv("results/LUAD_DESeq2_annotated.csv")
+            if os.path.exists(cache_file):
+                with open(cache_file, "rb") as f:
+                    _c = pickle.load(f)
+                _c["annotated_de"] = annotated_de
+                with open(cache_file, "wb") as f:
+                    pickle.dump(_c, f)
+        except Exception as e:
+            print(f"[WARN] Biotype lookup failed ({e}); survival screen will fall back to annotated-symbol filtering "
+                  "and the dashboard will NOT claim 'protein-coding'.")
 
     create_heatmap(top_candidates, filtered_expression, tcga_tumor)
 

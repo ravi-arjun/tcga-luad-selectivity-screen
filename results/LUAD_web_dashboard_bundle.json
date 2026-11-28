@@ -1,15 +1,21 @@
 {
+  "generated_from": "results/LUAD_vina_selectivity_screen.csv",
+  "generated_from_mtime": 1795851808.53714,
   "docking_results": [
     {
       "primary_target": "NEK2",
       "ligand": "Alisertib",
       "established_target": "AURKA",
-      "clinical_status": "Phase III (Aurora A inhibitor)",
+      "atp_competitive": true,
+      "clinical_status": "Investigational; not approved",
       "score_primary_vina": -10.093,
       "seed_sd_vina": 0.019,
-      "closest_offtarget": "NEK4",
-      "score_closest_offtarget_vina": -9.335,
+      "best_scoring_comparator": "NEK4",
+      "score_best_comparator_vina": -9.335,
       "delta_S_vina": -0.758,
+      "comparators_used": "NEK4;NEK7;NEK8",
+      "best_scoring_comparator_all": "NEK4",
+      "delta_S_vina_all_comparators": -0.758,
       "MW": 518.93,
       "cLogP": 5.75,
       "TPSA": 105.93,
@@ -21,202 +27,79 @@
       "score_AURKA_CTRL_vina": -9.206,
       "score_PHKG2_vina": NaN,
       "score_RPS6KB1_vina": NaN,
-      "score_NEK2_CTRL_vina": NaN
+      "score_NEK2_CTRL_vina": NaN,
+      "atp_pocket_selectivity_rank": 1.0
     },
     {
       "primary_target": "NEK2",
       "ligand": "Volasertib",
       "established_target": "PLK1",
-      "clinical_status": "Phase III (PLK1 inhibitor)",
-      "score_primary_vina": -8.79,
-      "seed_sd_vina": 0.017,
-      "closest_offtarget": "NEK7",
-      "score_closest_offtarget_vina": -8.194,
-      "delta_S_vina": -0.596,
+      "atp_competitive": true,
+      "clinical_status": "Investigational (reached Phase III in AML); not approved",
+      "score_primary_vina": -8.829,
+      "seed_sd_vina": 0.064,
+      "best_scoring_comparator": "NEK7",
+      "score_best_comparator_vina": -8.276,
+      "delta_S_vina": -0.553,
+      "comparators_used": "NEK4;NEK7;NEK8",
+      "best_scoring_comparator_all": "NEK7",
+      "delta_S_vina_all_comparators": -0.553,
       "MW": 620.84,
       "cLogP": 4.51,
       "TPSA": 106.17,
       "pose_file": "docking/poses/NEK2_Volasertib_pose.pdbqt",
-      "score_NEK4_vina": -6.49,
-      "score_NEK7_vina": -8.194,
-      "score_NEK8_vina": -7.196,
-      "score_PLK1_CTRL_vina": -7.861,
-      "score_AURKA_CTRL_vina": -7.891,
+      "score_NEK4_vina": -6.6,
+      "score_NEK7_vina": -8.276,
+      "score_NEK8_vina": -6.953,
+      "score_PLK1_CTRL_vina": -7.794,
+      "score_AURKA_CTRL_vina": -8.025,
       "score_PHKG2_vina": NaN,
       "score_RPS6KB1_vina": NaN,
-      "score_NEK2_CTRL_vina": NaN
-    },
-    {
-      "primary_target": "NEK2",
-      "ligand": "BI-2536",
-      "established_target": "PLK1",
-      "clinical_status": "Discontinued after Phase II (PLK1/2/3 inhibitor)",
-      "score_primary_vina": -9.606,
-      "seed_sd_vina": 0.036,
-      "closest_offtarget": "AURKA_CTRL",
-      "score_closest_offtarget_vina": -9.193,
-      "delta_S_vina": -0.413,
-      "MW": 521.67,
-      "cLogP": 3.56,
-      "TPSA": 102.93,
-      "pose_file": "docking/poses/NEK2_BI-2536_pose.pdbqt",
-      "score_NEK4_vina": -8.461,
-      "score_NEK7_vina": -8.527,
-      "score_NEK8_vina": -8.051,
-      "score_PLK1_CTRL_vina": -9.102,
-      "score_AURKA_CTRL_vina": -9.193,
-      "score_PHKG2_vina": NaN,
-      "score_RPS6KB1_vina": NaN,
-      "score_NEK2_CTRL_vina": NaN
-    },
-    {
-      "primary_target": "NEK2",
-      "ligand": "Tofacitinib",
-      "established_target": "JAK1 / JAK3",
-      "clinical_status": "FDA-approved",
-      "score_primary_vina": -8.296,
-      "seed_sd_vina": 0.018,
-      "closest_offtarget": "AURKA_CTRL",
-      "score_closest_offtarget_vina": -8.413,
-      "delta_S_vina": 0.117,
-      "MW": 312.38,
-      "cLogP": 1.54,
-      "TPSA": 88.91,
-      "pose_file": "docking/poses/NEK2_Tofacitinib_pose.pdbqt",
-      "score_NEK4_vina": -7.836,
-      "score_NEK7_vina": -7.677,
-      "score_NEK8_vina": -7.187,
-      "score_PLK1_CTRL_vina": -7.764,
-      "score_AURKA_CTRL_vina": -8.413,
-      "score_PHKG2_vina": NaN,
-      "score_RPS6KB1_vina": NaN,
-      "score_NEK2_CTRL_vina": NaN
-    },
-    {
-      "primary_target": "NEK2",
-      "ligand": "Barasertib",
-      "established_target": "AURKB",
-      "clinical_status": "Phase II/III (Aurora B inhibitor)",
-      "score_primary_vina": -7.7,
-      "seed_sd_vina": 0.075,
-      "closest_offtarget": "AURKA_CTRL",
-      "score_closest_offtarget_vina": -7.855,
-      "delta_S_vina": 0.155,
-      "MW": 565.72,
-      "cLogP": 3.04,
-      "TPSA": 115.32,
-      "pose_file": "docking/poses/NEK2_Barasertib_pose.pdbqt",
-      "score_NEK4_vina": -7.348,
-      "score_NEK7_vina": -7.519,
-      "score_NEK8_vina": -7.081,
-      "score_PLK1_CTRL_vina": -7.75,
-      "score_AURKA_CTRL_vina": -7.855,
-      "score_PHKG2_vina": NaN,
-      "score_RPS6KB1_vina": NaN,
-      "score_NEK2_CTRL_vina": NaN
+      "score_NEK2_CTRL_vina": NaN,
+      "atp_pocket_selectivity_rank": 2.0
     },
     {
       "primary_target": "NEK2",
       "ligand": "Sunitinib",
       "established_target": "VEGFR2 / PDGFRB / KIT",
-      "clinical_status": "FDA-approved",
-      "score_primary_vina": -8.791,
-      "seed_sd_vina": 0.028,
-      "closest_offtarget": "AURKA_CTRL",
-      "score_closest_offtarget_vina": -8.992,
-      "delta_S_vina": 0.201,
+      "atp_competitive": true,
+      "clinical_status": "FDA-approved (2006; RCC / GIST / pNET)",
+      "score_primary_vina": -8.829,
+      "seed_sd_vina": 0.031,
+      "best_scoring_comparator": "NEK4",
+      "score_best_comparator_vina": -8.292,
+      "delta_S_vina": -0.537,
+      "comparators_used": "NEK4;NEK7;NEK8",
+      "best_scoring_comparator_all": "AURKA_CTRL",
+      "delta_S_vina_all_comparators": 0.181,
       "MW": 398.48,
       "cLogP": 3.33,
       "TPSA": 77.23,
       "pose_file": "docking/poses/NEK2_Sunitinib_pose.pdbqt",
-      "score_NEK4_vina": -8.219,
-      "score_NEK7_vina": -7.951,
-      "score_NEK8_vina": -7.286,
-      "score_PLK1_CTRL_vina": -8.408,
-      "score_AURKA_CTRL_vina": -8.992,
+      "score_NEK4_vina": -8.292,
+      "score_NEK7_vina": -7.932,
+      "score_NEK8_vina": -7.276,
+      "score_PLK1_CTRL_vina": -8.513,
+      "score_AURKA_CTRL_vina": -9.01,
       "score_PHKG2_vina": NaN,
       "score_RPS6KB1_vina": NaN,
-      "score_NEK2_CTRL_vina": NaN
-    },
-    {
-      "primary_target": "NEK2",
-      "ligand": "Dasatinib",
-      "established_target": "ABL1 / SRC",
-      "clinical_status": "FDA-approved",
-      "score_primary_vina": -9.126,
-      "seed_sd_vina": 0.031,
-      "closest_offtarget": "PLK1_CTRL",
-      "score_closest_offtarget_vina": -9.704,
-      "delta_S_vina": 0.578,
-      "MW": 488.02,
-      "cLogP": 3.31,
-      "TPSA": 106.51,
-      "pose_file": "docking/poses/NEK2_Dasatinib_pose.pdbqt",
-      "score_NEK4_vina": -8.956,
-      "score_NEK7_vina": -9.006,
-      "score_NEK8_vina": -8.44,
-      "score_PLK1_CTRL_vina": -9.704,
-      "score_AURKA_CTRL_vina": -9.594,
-      "score_PHKG2_vina": NaN,
-      "score_RPS6KB1_vina": NaN,
-      "score_NEK2_CTRL_vina": NaN
-    },
-    {
-      "primary_target": "NEK2",
-      "ligand": "Rigosertib",
-      "established_target": "PLK1 / RAS-PI3K pathway",
-      "clinical_status": "Phase III (non-ATP-competitive modulator)",
-      "score_primary_vina": -7.515,
-      "seed_sd_vina": 0.145,
-      "closest_offtarget": "PLK1_CTRL",
-      "score_closest_offtarget_vina": -8.454,
-      "delta_S_vina": 0.939,
-      "MW": 451.5,
-      "cLogP": 2.8,
-      "TPSA": 120.39,
-      "pose_file": "docking/poses/NEK2_Rigosertib_pose.pdbqt",
-      "score_NEK4_vina": -7.223,
-      "score_NEK7_vina": -7.273,
-      "score_NEK8_vina": -6.989,
-      "score_PLK1_CTRL_vina": -8.454,
-      "score_AURKA_CTRL_vina": -7.92,
-      "score_PHKG2_vina": NaN,
-      "score_RPS6KB1_vina": NaN,
-      "score_NEK2_CTRL_vina": NaN
-    },
-    {
-      "primary_target": "NEK2",
-      "ligand": "Erlotinib",
-      "established_target": "EGFR",
-      "clinical_status": "FDA-approved (NSCLC)",
-      "score_primary_vina": -7.961,
-      "seed_sd_vina": 0.091,
-      "closest_offtarget": "NEK4",
-      "score_closest_offtarget_vina": -8.919,
-      "delta_S_vina": 0.958,
-      "MW": 393.44,
-      "cLogP": 3.41,
-      "TPSA": 74.73,
-      "pose_file": "docking/poses/NEK2_Erlotinib_pose.pdbqt",
-      "score_NEK4_vina": -8.919,
-      "score_NEK7_vina": -7.223,
-      "score_NEK8_vina": -6.94,
-      "score_PLK1_CTRL_vina": -8.427,
-      "score_AURKA_CTRL_vina": -8.253,
-      "score_PHKG2_vina": NaN,
-      "score_RPS6KB1_vina": NaN,
-      "score_NEK2_CTRL_vina": NaN
+      "score_NEK2_CTRL_vina": NaN,
+      "atp_pocket_selectivity_rank": 3.0
     },
     {
       "primary_target": "NEK2",
       "ligand": "Hesperadin",
       "established_target": "AURKB",
+      "atp_competitive": true,
       "clinical_status": "Preclinical mitotic tool compound",
       "score_primary_vina": -9.007,
       "seed_sd_vina": 0.04,
-      "closest_offtarget": "PLK1_CTRL",
-      "score_closest_offtarget_vina": -10.523,
-      "delta_S_vina": 1.516,
+      "best_scoring_comparator": "NEK4",
+      "score_best_comparator_vina": -8.499,
+      "delta_S_vina": -0.508,
+      "comparators_used": "NEK4;NEK7;NEK8",
+      "best_scoring_comparator_all": "PLK1_CTRL",
+      "delta_S_vina_all_comparators": 1.516,
       "MW": 558.7,
       "cLogP": 3.97,
       "TPSA": 98.82,
@@ -228,110 +111,219 @@
       "score_AURKA_CTRL_vina": -9.963,
       "score_PHKG2_vina": NaN,
       "score_RPS6KB1_vina": NaN,
-      "score_NEK2_CTRL_vina": NaN
+      "score_NEK2_CTRL_vina": NaN,
+      "atp_pocket_selectivity_rank": 4.0
     },
     {
-      "primary_target": "PLK1",
-      "ligand": "Rigosertib",
-      "established_target": "PLK1 / RAS-PI3K pathway",
-      "clinical_status": "Phase III (non-ATP-competitive modulator)",
-      "score_primary_vina": -8.451,
-      "seed_sd_vina": 0.05,
-      "closest_offtarget": "AURKA_CTRL",
-      "score_closest_offtarget_vina": -7.639,
-      "delta_S_vina": -0.812,
-      "MW": 451.5,
-      "cLogP": 2.8,
-      "TPSA": 120.39,
-      "pose_file": "docking/poses/PLK1_Rigosertib_pose.pdbqt",
-      "score_NEK4_vina": NaN,
-      "score_NEK7_vina": NaN,
-      "score_NEK8_vina": NaN,
-      "score_PLK1_CTRL_vina": NaN,
-      "score_AURKA_CTRL_vina": -7.639,
-      "score_PHKG2_vina": -7.476,
-      "score_RPS6KB1_vina": -7.103,
-      "score_NEK2_CTRL_vina": -7.166
-    },
-    {
-      "primary_target": "PLK1",
-      "ligand": "Erlotinib",
-      "established_target": "EGFR",
-      "clinical_status": "FDA-approved (NSCLC)",
-      "score_primary_vina": -8.456,
-      "seed_sd_vina": 0.185,
-      "closest_offtarget": "AURKA_CTRL",
-      "score_closest_offtarget_vina": -8.189,
-      "delta_S_vina": -0.267,
-      "MW": 393.44,
-      "cLogP": 3.41,
-      "TPSA": 74.73,
-      "pose_file": "docking/poses/PLK1_Erlotinib_pose.pdbqt",
-      "score_NEK4_vina": NaN,
-      "score_NEK7_vina": NaN,
-      "score_NEK8_vina": NaN,
-      "score_PLK1_CTRL_vina": NaN,
-      "score_AURKA_CTRL_vina": -8.189,
-      "score_PHKG2_vina": -7.956,
-      "score_RPS6KB1_vina": -6.968,
-      "score_NEK2_CTRL_vina": -7.818
-    },
-    {
-      "primary_target": "PLK1",
+      "primary_target": "NEK2",
       "ligand": "Barasertib",
       "established_target": "AURKB",
-      "clinical_status": "Phase II/III (Aurora B inhibitor)",
-      "score_primary_vina": -8.086,
-      "seed_sd_vina": 0.315,
-      "closest_offtarget": "AURKA_CTRL",
-      "score_closest_offtarget_vina": -8.043,
-      "delta_S_vina": -0.043,
+      "atp_competitive": true,
+      "clinical_status": "Investigational (AML trials); not approved",
+      "score_primary_vina": -7.7,
+      "seed_sd_vina": 0.075,
+      "best_scoring_comparator": "NEK7",
+      "score_best_comparator_vina": -7.519,
+      "delta_S_vina": -0.181,
+      "comparators_used": "NEK4;NEK7;NEK8",
+      "best_scoring_comparator_all": "AURKA_CTRL",
+      "delta_S_vina_all_comparators": 0.155,
       "MW": 565.72,
       "cLogP": 3.04,
       "TPSA": 115.32,
-      "pose_file": "docking/poses/PLK1_Barasertib_pose.pdbqt",
-      "score_NEK4_vina": NaN,
-      "score_NEK7_vina": NaN,
-      "score_NEK8_vina": NaN,
-      "score_PLK1_CTRL_vina": NaN,
-      "score_AURKA_CTRL_vina": -8.043,
-      "score_PHKG2_vina": -7.684,
-      "score_RPS6KB1_vina": -6.419,
-      "score_NEK2_CTRL_vina": -7.511
+      "pose_file": "docking/poses/NEK2_Barasertib_pose.pdbqt",
+      "score_NEK4_vina": -7.348,
+      "score_NEK7_vina": -7.519,
+      "score_NEK8_vina": -7.081,
+      "score_PLK1_CTRL_vina": -7.75,
+      "score_AURKA_CTRL_vina": -7.855,
+      "score_PHKG2_vina": NaN,
+      "score_RPS6KB1_vina": NaN,
+      "score_NEK2_CTRL_vina": NaN,
+      "atp_pocket_selectivity_rank": 5.0
+    },
+    {
+      "primary_target": "NEK2",
+      "ligand": "Dasatinib",
+      "established_target": "ABL1 / SRC",
+      "atp_competitive": true,
+      "clinical_status": "FDA-approved (2006; CML / Ph+ ALL)",
+      "score_primary_vina": -9.126,
+      "seed_sd_vina": 0.031,
+      "best_scoring_comparator": "NEK7",
+      "score_best_comparator_vina": -9.006,
+      "delta_S_vina": -0.12,
+      "comparators_used": "NEK4;NEK7;NEK8",
+      "best_scoring_comparator_all": "PLK1_CTRL",
+      "delta_S_vina_all_comparators": 0.578,
+      "MW": 488.02,
+      "cLogP": 3.31,
+      "TPSA": 106.51,
+      "pose_file": "docking/poses/NEK2_Dasatinib_pose.pdbqt",
+      "score_NEK4_vina": -8.956,
+      "score_NEK7_vina": -9.006,
+      "score_NEK8_vina": -8.44,
+      "score_PLK1_CTRL_vina": -9.704,
+      "score_AURKA_CTRL_vina": -9.594,
+      "score_PHKG2_vina": NaN,
+      "score_RPS6KB1_vina": NaN,
+      "score_NEK2_CTRL_vina": NaN,
+      "atp_pocket_selectivity_rank": 6.0
+    },
+    {
+      "primary_target": "NEK2",
+      "ligand": "BI-2536",
+      "established_target": "PLK1",
+      "atp_competitive": true,
+      "clinical_status": "Investigational (clinical trials); not approved; development discontinued",
+      "score_primary_vina": -9.05,
+      "seed_sd_vina": 0.012,
+      "best_scoring_comparator": "NEK7",
+      "score_best_comparator_vina": -8.987,
+      "delta_S_vina": -0.063,
+      "comparators_used": "NEK4;NEK7;NEK8",
+      "best_scoring_comparator_all": "AURKA_CTRL",
+      "delta_S_vina_all_comparators": 0.464,
+      "MW": 521.67,
+      "cLogP": 3.56,
+      "TPSA": 102.93,
+      "pose_file": "docking/poses/NEK2_BI-2536_pose.pdbqt",
+      "score_NEK4_vina": -8.118,
+      "score_NEK7_vina": -8.987,
+      "score_NEK8_vina": -8.11,
+      "score_PLK1_CTRL_vina": -8.673,
+      "score_AURKA_CTRL_vina": -9.514,
+      "score_PHKG2_vina": NaN,
+      "score_RPS6KB1_vina": NaN,
+      "score_NEK2_CTRL_vina": NaN,
+      "atp_pocket_selectivity_rank": 7.0
+    },
+    {
+      "primary_target": "NEK2",
+      "ligand": "Tofacitinib",
+      "established_target": "JAK1 / JAK3",
+      "atp_competitive": true,
+      "clinical_status": "FDA-approved (2012; RA / PsA / UC)",
+      "score_primary_vina": -7.703,
+      "seed_sd_vina": 0.021,
+      "best_scoring_comparator": "NEK4",
+      "score_best_comparator_vina": -7.648,
+      "delta_S_vina": -0.055,
+      "comparators_used": "NEK4;NEK7;NEK8",
+      "best_scoring_comparator_all": "AURKA_CTRL",
+      "delta_S_vina_all_comparators": 0.19,
+      "MW": 312.38,
+      "cLogP": 1.54,
+      "TPSA": 88.91,
+      "pose_file": "docking/poses/NEK2_Tofacitinib_pose.pdbqt",
+      "score_NEK4_vina": -7.648,
+      "score_NEK7_vina": -6.945,
+      "score_NEK8_vina": -6.842,
+      "score_PLK1_CTRL_vina": -7.299,
+      "score_AURKA_CTRL_vina": -7.893,
+      "score_PHKG2_vina": NaN,
+      "score_RPS6KB1_vina": NaN,
+      "score_NEK2_CTRL_vina": NaN,
+      "atp_pocket_selectivity_rank": 8.0
+    },
+    {
+      "primary_target": "NEK2",
+      "ligand": "Erlotinib",
+      "established_target": "EGFR",
+      "atp_competitive": true,
+      "clinical_status": "FDA-approved (2004; EGFR-mutant NSCLC)",
+      "score_primary_vina": -7.961,
+      "seed_sd_vina": 0.091,
+      "best_scoring_comparator": "NEK4",
+      "score_best_comparator_vina": -8.919,
+      "delta_S_vina": 0.958,
+      "comparators_used": "NEK4;NEK7;NEK8",
+      "best_scoring_comparator_all": "NEK4",
+      "delta_S_vina_all_comparators": 0.958,
+      "MW": 393.44,
+      "cLogP": 3.41,
+      "TPSA": 74.73,
+      "pose_file": "docking/poses/NEK2_Erlotinib_pose.pdbqt",
+      "score_NEK4_vina": -8.919,
+      "score_NEK7_vina": -7.223,
+      "score_NEK8_vina": -6.94,
+      "score_PLK1_CTRL_vina": -8.427,
+      "score_AURKA_CTRL_vina": -8.253,
+      "score_PHKG2_vina": NaN,
+      "score_RPS6KB1_vina": NaN,
+      "score_NEK2_CTRL_vina": NaN,
+      "atp_pocket_selectivity_rank": 9.0
+    },
+    {
+      "primary_target": "NEK2",
+      "ligand": "Rigosertib",
+      "established_target": "RAS-PI3K / PLK1 pathway",
+      "atp_competitive": false,
+      "clinical_status": "Investigational; Phase III INSPIRE (HR-MDS) did not meet its OS endpoint (2020); non-ATP-competitive modulator",
+      "score_primary_vina": -7.51,
+      "seed_sd_vina": 0.088,
+      "best_scoring_comparator": "NEK7",
+      "score_best_comparator_vina": -7.392,
+      "delta_S_vina": -0.118,
+      "comparators_used": "NEK4;NEK7;NEK8",
+      "best_scoring_comparator_all": "PLK1_CTRL",
+      "delta_S_vina_all_comparators": 0.998,
+      "MW": 451.5,
+      "cLogP": 2.8,
+      "TPSA": 120.39,
+      "pose_file": "docking/poses/NEK2_Rigosertib_pose.pdbqt",
+      "score_NEK4_vina": -7.22,
+      "score_NEK7_vina": -7.392,
+      "score_NEK8_vina": -6.964,
+      "score_PLK1_CTRL_vina": -8.508,
+      "score_AURKA_CTRL_vina": -7.797,
+      "score_PHKG2_vina": NaN,
+      "score_RPS6KB1_vina": NaN,
+      "score_NEK2_CTRL_vina": NaN,
+      "atp_pocket_selectivity_rank": NaN
     },
     {
       "primary_target": "PLK1",
-      "ligand": "Sunitinib",
-      "established_target": "VEGFR2 / PDGFRB / KIT",
-      "clinical_status": "FDA-approved",
-      "score_primary_vina": -8.587,
-      "seed_sd_vina": 0.121,
-      "closest_offtarget": "AURKA_CTRL",
-      "score_closest_offtarget_vina": -8.644,
-      "delta_S_vina": 0.057,
-      "MW": 398.48,
-      "cLogP": 3.33,
-      "TPSA": 77.23,
-      "pose_file": "docking/poses/PLK1_Sunitinib_pose.pdbqt",
+      "ligand": "BI-2536",
+      "established_target": "PLK1",
+      "atp_competitive": true,
+      "clinical_status": "Investigational (clinical trials); not approved; development discontinued",
+      "score_primary_vina": -9.585,
+      "seed_sd_vina": 0.01,
+      "best_scoring_comparator": "PHKG2",
+      "score_best_comparator_vina": -8.46,
+      "delta_S_vina": -1.125,
+      "comparators_used": "PHKG2;RPS6KB1",
+      "best_scoring_comparator_all": "NEK2_CTRL",
+      "delta_S_vina_all_comparators": -0.646,
+      "MW": 521.67,
+      "cLogP": 3.56,
+      "TPSA": 102.93,
+      "pose_file": "docking/poses/PLK1_BI-2536_pose.pdbqt",
       "score_NEK4_vina": NaN,
       "score_NEK7_vina": NaN,
       "score_NEK8_vina": NaN,
       "score_PLK1_CTRL_vina": NaN,
-      "score_AURKA_CTRL_vina": -8.644,
-      "score_PHKG2_vina": -8.406,
-      "score_RPS6KB1_vina": -7.746,
-      "score_NEK2_CTRL_vina": -7.847
+      "score_AURKA_CTRL_vina": -8.513,
+      "score_PHKG2_vina": -8.46,
+      "score_RPS6KB1_vina": -8.02,
+      "score_NEK2_CTRL_vina": -8.939,
+      "atp_pocket_selectivity_rank": 1.0
     },
     {
       "primary_target": "PLK1",
       "ligand": "Dasatinib",
       "established_target": "ABL1 / SRC",
-      "clinical_status": "FDA-approved",
+      "atp_competitive": true,
+      "clinical_status": "FDA-approved (2006; CML / Ph+ ALL)",
       "score_primary_vina": -9.211,
       "seed_sd_vina": 0.036,
-      "closest_offtarget": "AURKA_CTRL",
-      "score_closest_offtarget_vina": -9.302,
-      "delta_S_vina": 0.091,
+      "best_scoring_comparator": "PHKG2",
+      "score_best_comparator_vina": -8.626,
+      "delta_S_vina": -0.585,
+      "comparators_used": "PHKG2;RPS6KB1",
+      "best_scoring_comparator_all": "AURKA_CTRL",
+      "delta_S_vina_all_comparators": 0.091,
       "MW": 488.02,
       "cLogP": 3.31,
       "TPSA": 106.51,
@@ -343,87 +335,79 @@
       "score_AURKA_CTRL_vina": -9.302,
       "score_PHKG2_vina": -8.626,
       "score_RPS6KB1_vina": -8.336,
-      "score_NEK2_CTRL_vina": -8.23
+      "score_NEK2_CTRL_vina": -8.23,
+      "atp_pocket_selectivity_rank": 2.0
     },
     {
       "primary_target": "PLK1",
-      "ligand": "BI-2536",
-      "established_target": "PLK1",
-      "clinical_status": "Discontinued after Phase II (PLK1/2/3 inhibitor)",
-      "score_primary_vina": -9.237,
-      "seed_sd_vina": 0.019,
-      "closest_offtarget": "PHKG2",
-      "score_closest_offtarget_vina": -9.558,
-      "delta_S_vina": 0.321,
-      "MW": 521.67,
-      "cLogP": 3.56,
-      "TPSA": 102.93,
-      "pose_file": "docking/poses/PLK1_BI-2536_pose.pdbqt",
+      "ligand": "Erlotinib",
+      "established_target": "EGFR",
+      "atp_competitive": true,
+      "clinical_status": "FDA-approved (2004; EGFR-mutant NSCLC)",
+      "score_primary_vina": -8.456,
+      "seed_sd_vina": 0.185,
+      "best_scoring_comparator": "PHKG2",
+      "score_best_comparator_vina": -7.956,
+      "delta_S_vina": -0.5,
+      "comparators_used": "PHKG2;RPS6KB1",
+      "best_scoring_comparator_all": "AURKA_CTRL",
+      "delta_S_vina_all_comparators": -0.267,
+      "MW": 393.44,
+      "cLogP": 3.41,
+      "TPSA": 74.73,
+      "pose_file": "docking/poses/PLK1_Erlotinib_pose.pdbqt",
       "score_NEK4_vina": NaN,
       "score_NEK7_vina": NaN,
       "score_NEK8_vina": NaN,
       "score_PLK1_CTRL_vina": NaN,
-      "score_AURKA_CTRL_vina": -8.556,
-      "score_PHKG2_vina": -9.558,
-      "score_RPS6KB1_vina": -7.536,
-      "score_NEK2_CTRL_vina": -8.167
+      "score_AURKA_CTRL_vina": -8.189,
+      "score_PHKG2_vina": -7.956,
+      "score_RPS6KB1_vina": -6.968,
+      "score_NEK2_CTRL_vina": -7.818,
+      "atp_pocket_selectivity_rank": 3.0
     },
     {
       "primary_target": "PLK1",
-      "ligand": "Tofacitinib",
-      "established_target": "JAK1 / JAK3",
-      "clinical_status": "FDA-approved",
-      "score_primary_vina": -7.756,
-      "seed_sd_vina": 0.06,
-      "closest_offtarget": "AURKA_CTRL",
-      "score_closest_offtarget_vina": -8.467,
-      "delta_S_vina": 0.711,
-      "MW": 312.38,
-      "cLogP": 1.54,
-      "TPSA": 88.91,
-      "pose_file": "docking/poses/PLK1_Tofacitinib_pose.pdbqt",
-      "score_NEK4_vina": NaN,
-      "score_NEK7_vina": NaN,
-      "score_NEK8_vina": NaN,
-      "score_PLK1_CTRL_vina": NaN,
-      "score_AURKA_CTRL_vina": -8.467,
-      "score_PHKG2_vina": -7.946,
-      "score_RPS6KB1_vina": -7.423,
-      "score_NEK2_CTRL_vina": -7.887
-    },
-    {
-      "primary_target": "PLK1",
-      "ligand": "Hesperadin",
+      "ligand": "Barasertib",
       "established_target": "AURKB",
-      "clinical_status": "Preclinical mitotic tool compound",
-      "score_primary_vina": -8.58,
-      "seed_sd_vina": 0.006,
-      "closest_offtarget": "PHKG2",
-      "score_closest_offtarget_vina": -9.371,
-      "delta_S_vina": 0.791,
-      "MW": 558.7,
-      "cLogP": 3.97,
-      "TPSA": 98.82,
-      "pose_file": "docking/poses/PLK1_Hesperadin_pose.pdbqt",
+      "atp_competitive": true,
+      "clinical_status": "Investigational (AML trials); not approved",
+      "score_primary_vina": -8.086,
+      "seed_sd_vina": 0.315,
+      "best_scoring_comparator": "PHKG2",
+      "score_best_comparator_vina": -7.684,
+      "delta_S_vina": -0.402,
+      "comparators_used": "PHKG2;RPS6KB1",
+      "best_scoring_comparator_all": "AURKA_CTRL",
+      "delta_S_vina_all_comparators": -0.043,
+      "MW": 565.72,
+      "cLogP": 3.04,
+      "TPSA": 115.32,
+      "pose_file": "docking/poses/PLK1_Barasertib_pose.pdbqt",
       "score_NEK4_vina": NaN,
       "score_NEK7_vina": NaN,
       "score_NEK8_vina": NaN,
       "score_PLK1_CTRL_vina": NaN,
-      "score_AURKA_CTRL_vina": -8.752,
-      "score_PHKG2_vina": -9.371,
-      "score_RPS6KB1_vina": -7.447,
-      "score_NEK2_CTRL_vina": -8.993
+      "score_AURKA_CTRL_vina": -8.043,
+      "score_PHKG2_vina": -7.684,
+      "score_RPS6KB1_vina": -6.419,
+      "score_NEK2_CTRL_vina": -7.511,
+      "atp_pocket_selectivity_rank": 4.0
     },
     {
       "primary_target": "PLK1",
       "ligand": "Alisertib",
       "established_target": "AURKA",
-      "clinical_status": "Phase III (Aurora A inhibitor)",
+      "atp_competitive": true,
+      "clinical_status": "Investigational; not approved",
       "score_primary_vina": -9.055,
       "seed_sd_vina": 0.013,
-      "closest_offtarget": "NEK2_CTRL",
-      "score_closest_offtarget_vina": -9.893,
-      "delta_S_vina": 0.838,
+      "best_scoring_comparator": "PHKG2",
+      "score_best_comparator_vina": -8.767,
+      "delta_S_vina": -0.288,
+      "comparators_used": "PHKG2;RPS6KB1",
+      "best_scoring_comparator_all": "NEK2_CTRL",
+      "delta_S_vina_all_comparators": 0.838,
       "MW": 518.93,
       "cLogP": 5.75,
       "TPSA": 105.93,
@@ -435,18 +419,107 @@
       "score_AURKA_CTRL_vina": -8.719,
       "score_PHKG2_vina": -8.767,
       "score_RPS6KB1_vina": -8.384,
-      "score_NEK2_CTRL_vina": -9.893
+      "score_NEK2_CTRL_vina": -9.893,
+      "atp_pocket_selectivity_rank": 5.0
+    },
+    {
+      "primary_target": "PLK1",
+      "ligand": "Tofacitinib",
+      "established_target": "JAK1 / JAK3",
+      "atp_competitive": true,
+      "clinical_status": "FDA-approved (2012; RA / PsA / UC)",
+      "score_primary_vina": -7.462,
+      "seed_sd_vina": 0.127,
+      "best_scoring_comparator": "PHKG2",
+      "score_best_comparator_vina": -7.199,
+      "delta_S_vina": -0.263,
+      "comparators_used": "PHKG2;RPS6KB1",
+      "best_scoring_comparator_all": "AURKA_CTRL",
+      "delta_S_vina_all_comparators": 0.435,
+      "MW": 312.38,
+      "cLogP": 1.54,
+      "TPSA": 88.91,
+      "pose_file": "docking/poses/PLK1_Tofacitinib_pose.pdbqt",
+      "score_NEK4_vina": NaN,
+      "score_NEK7_vina": NaN,
+      "score_NEK8_vina": NaN,
+      "score_PLK1_CTRL_vina": NaN,
+      "score_AURKA_CTRL_vina": -7.897,
+      "score_PHKG2_vina": -7.199,
+      "score_RPS6KB1_vina": -7.171,
+      "score_NEK2_CTRL_vina": -7.313,
+      "atp_pocket_selectivity_rank": 6.0
+    },
+    {
+      "primary_target": "PLK1",
+      "ligand": "Sunitinib",
+      "established_target": "VEGFR2 / PDGFRB / KIT",
+      "atp_competitive": true,
+      "clinical_status": "FDA-approved (2006; RCC / GIST / pNET)",
+      "score_primary_vina": -8.791,
+      "seed_sd_vina": 0.126,
+      "best_scoring_comparator": "PHKG2",
+      "score_best_comparator_vina": -8.537,
+      "delta_S_vina": -0.254,
+      "comparators_used": "PHKG2;RPS6KB1",
+      "best_scoring_comparator_all": "AURKA_CTRL",
+      "delta_S_vina_all_comparators": -0.121,
+      "MW": 398.48,
+      "cLogP": 3.33,
+      "TPSA": 77.23,
+      "pose_file": "docking/poses/PLK1_Sunitinib_pose.pdbqt",
+      "score_NEK4_vina": NaN,
+      "score_NEK7_vina": NaN,
+      "score_NEK8_vina": NaN,
+      "score_PLK1_CTRL_vina": NaN,
+      "score_AURKA_CTRL_vina": -8.67,
+      "score_PHKG2_vina": -8.537,
+      "score_RPS6KB1_vina": -7.687,
+      "score_NEK2_CTRL_vina": -7.884,
+      "atp_pocket_selectivity_rank": 7.0
+    },
+    {
+      "primary_target": "PLK1",
+      "ligand": "Hesperadin",
+      "established_target": "AURKB",
+      "atp_competitive": true,
+      "clinical_status": "Preclinical mitotic tool compound",
+      "score_primary_vina": -8.58,
+      "seed_sd_vina": 0.006,
+      "best_scoring_comparator": "PHKG2",
+      "score_best_comparator_vina": -9.371,
+      "delta_S_vina": 0.791,
+      "comparators_used": "PHKG2;RPS6KB1",
+      "best_scoring_comparator_all": "PHKG2",
+      "delta_S_vina_all_comparators": 0.791,
+      "MW": 558.7,
+      "cLogP": 3.97,
+      "TPSA": 98.82,
+      "pose_file": "docking/poses/PLK1_Hesperadin_pose.pdbqt",
+      "score_NEK4_vina": NaN,
+      "score_NEK7_vina": NaN,
+      "score_NEK8_vina": NaN,
+      "score_PLK1_CTRL_vina": NaN,
+      "score_AURKA_CTRL_vina": -8.752,
+      "score_PHKG2_vina": -9.371,
+      "score_RPS6KB1_vina": -7.447,
+      "score_NEK2_CTRL_vina": -8.993,
+      "atp_pocket_selectivity_rank": 8.0
     },
     {
       "primary_target": "PLK1",
       "ligand": "Volasertib",
       "established_target": "PLK1",
-      "clinical_status": "Phase III (PLK1 inhibitor)",
-      "score_primary_vina": -7.992,
-      "seed_sd_vina": 0.293,
-      "closest_offtarget": "NEK2_CTRL",
-      "score_closest_offtarget_vina": -8.853,
-      "delta_S_vina": 0.861,
+      "atp_competitive": true,
+      "clinical_status": "Investigational (reached Phase III in AML); not approved",
+      "score_primary_vina": -7.694,
+      "seed_sd_vina": 0.205,
+      "best_scoring_comparator": "PHKG2",
+      "score_best_comparator_vina": -8.634,
+      "delta_S_vina": 0.94,
+      "comparators_used": "PHKG2;RPS6KB1",
+      "best_scoring_comparator_all": "PHKG2",
+      "delta_S_vina_all_comparators": 0.94,
       "MW": 620.84,
       "cLogP": 4.51,
       "TPSA": 106.17,
@@ -455,10 +528,39 @@
       "score_NEK7_vina": NaN,
       "score_NEK8_vina": NaN,
       "score_PLK1_CTRL_vina": NaN,
-      "score_AURKA_CTRL_vina": -7.693,
-      "score_PHKG2_vina": -8.73,
-      "score_RPS6KB1_vina": -2.589,
-      "score_NEK2_CTRL_vina": -8.853
+      "score_AURKA_CTRL_vina": -7.834,
+      "score_PHKG2_vina": -8.634,
+      "score_RPS6KB1_vina": -4.947,
+      "score_NEK2_CTRL_vina": -8.588,
+      "atp_pocket_selectivity_rank": 9.0
+    },
+    {
+      "primary_target": "PLK1",
+      "ligand": "Rigosertib",
+      "established_target": "RAS-PI3K / PLK1 pathway",
+      "atp_competitive": false,
+      "clinical_status": "Investigational; Phase III INSPIRE (HR-MDS) did not meet its OS endpoint (2020); non-ATP-competitive modulator",
+      "score_primary_vina": -8.44,
+      "seed_sd_vina": 0.02,
+      "best_scoring_comparator": "PHKG2",
+      "score_best_comparator_vina": -7.474,
+      "delta_S_vina": -0.966,
+      "comparators_used": "PHKG2;RPS6KB1",
+      "best_scoring_comparator_all": "AURKA_CTRL",
+      "delta_S_vina_all_comparators": -0.875,
+      "MW": 451.5,
+      "cLogP": 2.8,
+      "TPSA": 120.39,
+      "pose_file": "docking/poses/PLK1_Rigosertib_pose.pdbqt",
+      "score_NEK4_vina": NaN,
+      "score_NEK7_vina": NaN,
+      "score_NEK8_vina": NaN,
+      "score_PLK1_CTRL_vina": NaN,
+      "score_AURKA_CTRL_vina": -7.565,
+      "score_PHKG2_vina": -7.474,
+      "score_RPS6KB1_vina": -7.094,
+      "score_NEK2_CTRL_vina": -7.165,
+      "atp_pocket_selectivity_rank": NaN
     }
   ],
   "pocket_contacts": {
@@ -551,28 +653,13 @@
     ],
     "NEK2_Volasertib": [
       {
-        "residue": "ASP159",
-        "min_dist_A": 2.84,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "ILE14",
-        "min_dist_A": 2.92,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "ARG164",
-        "min_dist_A": 3.05,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "ASN146",
-        "min_dist_A": 3.07,
+        "residue": "TYR88",
+        "min_dist_A": 3.06,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
         "residue": "LYS174",
-        "min_dist_A": 3.14,
+        "min_dist_A": 3.2,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
@@ -582,134 +669,92 @@
       },
       {
         "residue": "SER18",
-        "min_dist_A": 3.26,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "CYS89",
-        "min_dist_A": 3.34,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "ASP93",
-        "min_dist_A": 3.35,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "ASP141",
-        "min_dist_A": 3.35,
+        "min_dist_A": 3.27,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
         "residue": "GLY92",
-        "min_dist_A": 3.36,
+        "min_dist_A": 3.31,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "PHE160",
+        "residue": "LYS143",
+        "min_dist_A": 3.37,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "GLY20",
         "min_dist_A": 3.43,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "TYR19",
+        "residue": "CYS89",
+        "min_dist_A": 3.43,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ASP159",
         "min_dist_A": 3.44,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "TYR88",
-        "min_dist_A": 3.45,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "LYS143",
+        "residue": "ILE14",
         "min_dist_A": 3.46,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "TYR12",
-        "min_dist_A": 3.5,
+        "residue": "ASP141",
+        "min_dist_A": 3.48,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "GLY17",
-        "min_dist_A": 3.62,
+        "residue": "ASN146",
+        "min_dist_A": 3.53,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
-      {
-        "residue": "PHE148",
-        "min_dist_A": 3.64,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "GLY20",
-        "min_dist_A": 3.71,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      }
-    ],
-    "NEK2_BI-2536": [
       {
         "residue": "ARG164",
-        "min_dist_A": 3.17,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "LYS143",
-        "min_dist_A": 3.2,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "GLU87",
-        "min_dist_A": 3.29,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "TYR88",
-        "min_dist_A": 3.32,
+        "min_dist_A": 3.54,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "LYS37",
-        "min_dist_A": 3.33,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "PHE148",
-        "min_dist_A": 3.34,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "CYS22",
-        "min_dist_A": 3.36,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "ASP93",
-        "min_dist_A": 3.38,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "TYR19",
-        "min_dist_A": 3.51,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "CYS89",
-        "min_dist_A": 3.55,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "ILE14",
+        "residue": "GLY15",
         "min_dist_A": 3.56,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "GLY92",
-        "min_dist_A": 3.59,
+        "residue": "PHE160",
+        "min_dist_A": 3.6,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "VAL68",
-        "min_dist_A": 3.69,
+        "residue": "TYR19",
+        "min_dist_A": 3.61,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "CYS22",
+        "min_dist_A": 3.61,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "TYR12",
+        "min_dist_A": 3.63,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ARG21",
+        "min_dist_A": 3.7,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "GLU90",
+        "min_dist_A": 3.73,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "PHE148",
+        "min_dist_A": 3.73,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
@@ -718,65 +763,152 @@
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       }
     ],
-    "NEK2_Tofacitinib": [
-      {
-        "residue": "GLY20",
-        "min_dist_A": 3.05,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "TYR19",
-        "min_dist_A": 3.09,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "ARG21",
-        "min_dist_A": 3.18,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "ARG164",
-        "min_dist_A": 3.26,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
+    "NEK2_Sunitinib": [
       {
         "residue": "PHE160",
-        "min_dist_A": 3.32,
+        "min_dist_A": 2.9,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
         "residue": "LYS37",
-        "min_dist_A": 3.33,
+        "min_dist_A": 2.92,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
-        "residue": "CYS22",
-        "min_dist_A": 3.52,
+        "residue": "LYS143",
+        "min_dist_A": 3.4,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "CYS89",
+        "min_dist_A": 3.46,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "VAL35",
+        "min_dist_A": 3.49,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ARG164",
+        "min_dist_A": 3.53,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
         "residue": "ALA163",
-        "min_dist_A": 3.55,
+        "min_dist_A": 3.54,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "GLY161",
+        "residue": "PHE148",
+        "min_dist_A": 3.56,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "CYS22",
         "min_dist_A": 3.58,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "ASN146",
-        "min_dist_A": 3.59,
+        "residue": "ALA145",
+        "min_dist_A": 3.58,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "LEU39",
-        "min_dist_A": 3.61,
+        "residue": "VAL68",
+        "min_dist_A": 3.6,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "TYR19",
+        "min_dist_A": 3.68,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ASN146",
+        "min_dist_A": 3.68,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
         "residue": "GLY17",
-        "min_dist_A": 3.66,
+        "min_dist_A": 3.72,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "GLU87",
+        "min_dist_A": 3.73,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      }
+    ],
+    "NEK2_Hesperadin": [
+      {
+        "residue": "CYS89",
+        "min_dist_A": 2.94,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "LYS37",
+        "min_dist_A": 2.99,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "TYR88",
+        "min_dist_A": 3.28,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "GLU90",
+        "min_dist_A": 3.31,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "PHE148",
+        "min_dist_A": 3.37,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "PHE160",
+        "min_dist_A": 3.45,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ILE14",
+        "min_dist_A": 3.47,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ALA145",
+        "min_dist_A": 3.48,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ASN146",
+        "min_dist_A": 3.53,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "TYR12",
+        "min_dist_A": 3.55,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "TYR19",
+        "min_dist_A": 3.71,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "CYS22",
+        "min_dist_A": 3.75,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ASP93",
+        "min_dist_A": 3.75,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "GLY92",
+        "min_dist_A": 3.78,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       }
     ],
@@ -882,88 +1014,6 @@
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       }
     ],
-    "NEK2_Sunitinib": [
-      {
-        "residue": "LYS37",
-        "min_dist_A": 2.93,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "PHE160",
-        "min_dist_A": 2.93,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "CYS89",
-        "min_dist_A": 3.36,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "LYS143",
-        "min_dist_A": 3.4,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "VAL35",
-        "min_dist_A": 3.46,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "PHE148",
-        "min_dist_A": 3.51,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "ALA163",
-        "min_dist_A": 3.51,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "ARG164",
-        "min_dist_A": 3.54,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "ALA145",
-        "min_dist_A": 3.57,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "GLU87",
-        "min_dist_A": 3.59,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "CYS22",
-        "min_dist_A": 3.63,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "VAL68",
-        "min_dist_A": 3.67,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "TYR19",
-        "min_dist_A": 3.69,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "GLY17",
-        "min_dist_A": 3.7,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "ASN146",
-        "min_dist_A": 3.72,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "ILE14",
-        "min_dist_A": 3.77,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      }
-    ],
     "NEK2_Dasatinib": [
       {
         "residue": "LYS143",
@@ -1036,94 +1086,156 @@
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       }
     ],
-    "NEK2_Rigosertib": [
+    "NEK2_BI-2536": [
       {
         "residue": "LYS37",
-        "min_dist_A": 2.8,
+        "min_dist_A": 3.09,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
-        "residue": "GLU87",
-        "min_dist_A": 2.84,
+        "residue": "ASP93",
+        "min_dist_A": 3.21,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
-        "residue": "CYS89",
-        "min_dist_A": 2.92,
+        "residue": "GLU90",
+        "min_dist_A": 3.32,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
-        "residue": "LEU39",
-        "min_dist_A": 3.33,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "GLY20",
-        "min_dist_A": 3.34,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "TYR19",
-        "min_dist_A": 3.36,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "PHE148",
+        "residue": "ALA163",
         "min_dist_A": 3.38,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "ILE14",
-        "min_dist_A": 3.45,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
         "residue": "CYS22",
-        "min_dist_A": 3.49,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "ARG21",
-        "min_dist_A": 3.51,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "GLY15",
-        "min_dist_A": 3.54,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "GLU38",
-        "min_dist_A": 3.56,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "GLY17",
-        "min_dist_A": 3.58,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "TYR88",
-        "min_dist_A": 3.63,
+        "min_dist_A": 3.4,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
         "residue": "ASN146",
-        "min_dist_A": 3.63,
+        "min_dist_A": 3.4,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "PHE148",
+        "min_dist_A": 3.42,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "SER18",
+        "min_dist_A": 3.43,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ILE14",
+        "min_dist_A": 3.48,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "GLY17",
+        "min_dist_A": 3.48,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "TYR88",
+        "min_dist_A": 3.58,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
         "residue": "GLY92",
-        "min_dist_A": 3.66,
+        "min_dist_A": 3.59,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "ALA145",
-        "min_dist_A": 3.68,
+        "residue": "GLY158",
+        "min_dist_A": 3.62,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "VAL68",
+        "residue": "TYR12",
+        "min_dist_A": 3.67,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "GLY20",
+        "min_dist_A": 3.69,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "VAL35",
+        "min_dist_A": 3.7,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "TYR19",
+        "min_dist_A": 3.73,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      }
+    ],
+    "NEK2_Tofacitinib": [
+      {
+        "residue": "TYR19",
+        "min_dist_A": 2.91,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "LYS143",
+        "min_dist_A": 3.21,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "GLY20",
+        "min_dist_A": 3.3,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "PHE160",
+        "min_dist_A": 3.36,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "CYS22",
+        "min_dist_A": 3.42,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ASN146",
+        "min_dist_A": 3.5,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "LYS37",
+        "min_dist_A": 3.55,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "SER18",
+        "min_dist_A": 3.58,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ARG21",
+        "min_dist_A": 3.59,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "GLY17",
+        "min_dist_A": 3.62,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "LEU39",
+        "min_dist_A": 3.71,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "LYS174",
+        "min_dist_A": 3.73,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ARG164",
         "min_dist_A": 3.75,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       }
@@ -1190,157 +1302,239 @@
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       }
     ],
-    "NEK2_Hesperadin": [
+    "NEK2_Rigosertib": [
+      {
+        "residue": "LYS37",
+        "min_dist_A": 2.8,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "GLU87",
+        "min_dist_A": 2.8,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
       {
         "residue": "CYS89",
         "min_dist_A": 2.94,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
-        "residue": "LYS37",
-        "min_dist_A": 2.99,
+        "residue": "GLY20",
+        "min_dist_A": 3.3,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
         "residue": "TYR88",
-        "min_dist_A": 3.28,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "GLU90",
-        "min_dist_A": 3.31,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "PHE148",
-        "min_dist_A": 3.37,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "PHE160",
-        "min_dist_A": 3.45,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "ILE14",
-        "min_dist_A": 3.47,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "ALA145",
-        "min_dist_A": 3.48,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "ASN146",
-        "min_dist_A": 3.53,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "TYR12",
-        "min_dist_A": 3.55,
+        "min_dist_A": 3.32,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
         "residue": "TYR19",
-        "min_dist_A": 3.71,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "CYS22",
-        "min_dist_A": 3.75,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "ASP93",
-        "min_dist_A": 3.75,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "GLY92",
-        "min_dist_A": 3.78,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      }
-    ],
-    "PLK1_Rigosertib": [
-      {
-        "residue": "CYS133",
-        "min_dist_A": 2.95,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "ARG136",
-        "min_dist_A": 3.03,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "GLY62",
-        "min_dist_A": 3.15,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "ALA65",
-        "min_dist_A": 3.26,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "ASP194",
-        "min_dist_A": 3.29,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "PHE183",
         "min_dist_A": 3.37,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "LYS82",
-        "min_dist_A": 3.43,
+        "residue": "ASP93",
+        "min_dist_A": 3.41,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "GLU101",
-        "min_dist_A": 3.43,
+        "residue": "LEU39",
+        "min_dist_A": 3.42,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "LEU132",
-        "min_dist_A": 3.47,
+        "residue": "ASN146",
+        "min_dist_A": 3.46,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "LEU59",
+        "residue": "ARG21",
         "min_dist_A": 3.51,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "LYS66",
+        "residue": "PHE148",
+        "min_dist_A": 3.51,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "GLY17",
+        "min_dist_A": 3.54,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "GLY15",
+        "min_dist_A": 3.55,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "CYS22",
+        "min_dist_A": 3.57,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ILE14",
+        "min_dist_A": 3.59,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "GLY92",
+        "min_dist_A": 3.64,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "GLU38",
+        "min_dist_A": 3.67,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "VAL35",
+        "min_dist_A": 3.77,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ALA145",
+        "min_dist_A": 3.79,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      }
+    ],
+    "PLK1_BI-2536": [
+      {
+        "residue": "ARG136",
+        "min_dist_A": 3.31,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "CYS133",
+        "min_dist_A": 3.35,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "PHE183",
+        "min_dist_A": 3.35,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ASP194",
+        "min_dist_A": 3.35,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "LEU59",
+        "min_dist_A": 3.36,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "PHE58",
         "min_dist_A": 3.52,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "LEU130",
-        "min_dist_A": 3.52,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "GLU140",
+        "residue": "LYS82",
         "min_dist_A": 3.53,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
         "residue": "CYS67",
-        "min_dist_A": 3.64,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "ALA80",
-        "min_dist_A": 3.68,
+        "min_dist_A": 3.54,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
         "residue": "ARG134",
-        "min_dist_A": 3.71,
+        "min_dist_A": 3.63,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ARG57",
+        "min_dist_A": 3.64,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "LEU130",
+        "min_dist_A": 3.66,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ALA65",
+        "min_dist_A": 3.74,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "LYS66",
+        "min_dist_A": 3.74,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "VAL114",
+        "min_dist_A": 3.75,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      }
+    ],
+    "PLK1_Dasatinib": [
+      {
+        "residue": "LYS61",
+        "min_dist_A": 2.8,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "ASP194",
+        "min_dist_A": 2.92,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "GLY62",
+        "min_dist_A": 3.23,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "GLU131",
+        "min_dist_A": 3.39,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "GLY60",
+        "min_dist_A": 3.46,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "GLY180",
+        "min_dist_A": 3.48,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "LYS178",
+        "min_dist_A": 3.58,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "CYS67",
+        "min_dist_A": 3.59,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "CYS133",
+        "min_dist_A": 3.59,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "PHE183",
+        "min_dist_A": 3.59,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "LYS82",
+        "min_dist_A": 3.6,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "LEU130",
+        "min_dist_A": 3.61,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "VAL114",
+        "min_dist_A": 3.62,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       }
     ],
@@ -1533,236 +1727,179 @@
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       }
     ],
-    "PLK1_Sunitinib": [
+    "PLK1_Alisertib": [
       {
-        "residue": "LEU59",
-        "min_dist_A": 2.9,
+        "residue": "PHE58",
+        "min_dist_A": 3.03,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "ARG136",
-        "min_dist_A": 2.97,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "CYS133",
-        "min_dist_A": 2.99,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
         "residue": "ARG57",
-        "min_dist_A": 3.5,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+        "min_dist_A": 3.09,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
-        "residue": "PHE58",
-        "min_dist_A": 3.52,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+        "residue": "GLU140",
+        "min_dist_A": 3.11,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
         "residue": "PHE183",
-        "min_dist_A": 3.61,
+        "min_dist_A": 3.31,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "ARG134",
-        "min_dist_A": 3.62,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "CYS67",
-        "min_dist_A": 3.67,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "LEU130",
-        "min_dist_A": 3.69,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "LEU132",
-        "min_dist_A": 3.79,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      }
-    ],
-    "PLK1_Dasatinib": [
-      {
-        "residue": "LYS61",
-        "min_dist_A": 2.8,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "ASP194",
-        "min_dist_A": 2.92,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "GLY62",
-        "min_dist_A": 3.23,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "GLU131",
-        "min_dist_A": 3.39,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "GLY60",
-        "min_dist_A": 3.46,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "GLY180",
-        "min_dist_A": 3.48,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "LYS178",
-        "min_dist_A": 3.58,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "CYS67",
-        "min_dist_A": 3.59,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "CYS133",
-        "min_dist_A": 3.59,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "PHE183",
-        "min_dist_A": 3.59,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "LYS82",
-        "min_dist_A": 3.6,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "LEU130",
-        "min_dist_A": 3.61,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "VAL114",
-        "min_dist_A": 3.62,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      }
-    ],
-    "PLK1_BI-2536": [
-      {
-        "residue": "CYS133",
-        "min_dist_A": 2.88,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
         "residue": "ARG136",
-        "min_dist_A": 3.24,
+        "min_dist_A": 3.35,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "GLU69",
-        "min_dist_A": 3.29,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "ARG134",
-        "min_dist_A": 3.32,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "LEU132",
-        "min_dist_A": 3.39,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
         "residue": "LEU59",
+        "min_dist_A": 3.39,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "CYS67",
         "min_dist_A": 3.44,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "CYS67",
-        "min_dist_A": 3.53,
+        "residue": "GLY180",
+        "min_dist_A": 3.47,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "ASP194",
-        "min_dist_A": 3.56,
+        "residue": "GLY60",
+        "min_dist_A": 3.48,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "PHE183",
-        "min_dist_A": 3.57,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "VAL114",
-        "min_dist_A": 3.58,
+        "residue": "ARG134",
+        "min_dist_A": 3.48,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
         "residue": "LYS61",
-        "min_dist_A": 3.63,
+        "min_dist_A": 3.55,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "LEU130",
-        "min_dist_A": 3.68,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "GLU131",
-        "min_dist_A": 3.71,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "GLY62",
-        "min_dist_A": 3.72,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "ARG57",
-        "min_dist_A": 3.76,
+        "residue": "CYS133",
+        "min_dist_A": 3.6,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       }
     ],
     "PLK1_Tofacitinib": [
       {
-        "residue": "ARG136",
-        "min_dist_A": 3.15,
+        "residue": "CYS133",
+        "min_dist_A": 3.03,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
-        "residue": "CYS133",
-        "min_dist_A": 3.4,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
         "residue": "LEU59",
-        "min_dist_A": 3.42,
+        "min_dist_A": 3.46,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "VAL114",
-        "min_dist_A": 3.43,
+        "residue": "GLY62",
+        "min_dist_A": 3.55,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "LYS61",
-        "min_dist_A": 3.44,
+        "residue": "LEU132",
+        "min_dist_A": 3.55,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
         "residue": "PHE183",
-        "min_dist_A": 3.47,
+        "min_dist_A": 3.59,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ALA65",
+        "min_dist_A": 3.6,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "LYS66",
+        "min_dist_A": 3.6,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ALA80",
+        "min_dist_A": 3.6,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "LYS61",
+        "min_dist_A": 3.64,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
         "residue": "CYS67",
-        "min_dist_A": 3.53,
+        "min_dist_A": 3.65,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "LYS82",
+        "min_dist_A": 3.68,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      }
+    ],
+    "PLK1_Sunitinib": [
+      {
+        "residue": "CYS133",
+        "min_dist_A": 2.79,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "LEU59",
+        "min_dist_A": 3.04,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "ARG136",
+        "min_dist_A": 3.15,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "GLU131",
+        "min_dist_A": 3.36,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "PHE183",
+        "min_dist_A": 3.46,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ARG57",
+        "min_dist_A": 3.54,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "PHE58",
+        "min_dist_A": 3.56,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ARG134",
+        "min_dist_A": 3.59,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "LEU130",
+        "min_dist_A": 3.65,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "LEU132",
+        "min_dist_A": 3.69,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ALA80",
+        "min_dist_A": 3.74,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       }
     ],
@@ -1838,137 +1975,137 @@
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       }
     ],
-    "PLK1_Alisertib": [
+    "PLK1_Volasertib": [
       {
-        "residue": "PHE58",
-        "min_dist_A": 3.03,
+        "residue": "LEU59",
+        "min_dist_A": 3.05,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
-        "residue": "ARG57",
-        "min_dist_A": 3.09,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "GLU140",
-        "min_dist_A": 3.11,
+        "residue": "ARG134",
+        "min_dist_A": 3.19,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
         "residue": "PHE183",
-        "min_dist_A": 3.31,
+        "min_dist_A": 3.38,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "ARG136",
-        "min_dist_A": 3.35,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "LEU59",
-        "min_dist_A": 3.39,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
         "residue": "CYS67",
+        "min_dist_A": 3.43,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ASP194",
+        "min_dist_A": 3.43,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "LYS82",
         "min_dist_A": 3.44,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "GLY180",
-        "min_dist_A": 3.47,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
         "residue": "GLY60",
-        "min_dist_A": 3.48,
+        "min_dist_A": 3.5,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "ARG134",
-        "min_dist_A": 3.48,
+        "residue": "ARG136",
+        "min_dist_A": 3.54,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "LYS61",
+        "residue": "GLY62",
         "min_dist_A": 3.55,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
         "residue": "CYS133",
-        "min_dist_A": 3.6,
+        "min_dist_A": 3.75,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       }
     ],
-    "PLK1_Volasertib": [
+    "PLK1_Rigosertib": [
       {
         "residue": "CYS133",
-        "min_dist_A": 2.84,
+        "min_dist_A": 2.8,
+        "contact_category": "Polar Atom Proximity (<3.4 A)"
+      },
+      {
+        "residue": "ARG136",
+        "min_dist_A": 2.97,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
         "residue": "LEU59",
-        "min_dist_A": 3.02,
+        "min_dist_A": 2.99,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "ARG134",
-        "min_dist_A": 3.03,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
-      },
-      {
-        "residue": "ARG57",
-        "min_dist_A": 3.05,
+        "residue": "LYS82",
+        "min_dist_A": 2.99,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
         "residue": "ASP194",
-        "min_dist_A": 3.05,
+        "min_dist_A": 3.02,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "GLU101",
+        "min_dist_A": 3.26,
         "contact_category": "Polar Atom Proximity (<3.4 A)"
       },
       {
-        "residue": "LYS178",
-        "min_dist_A": 3.39,
-        "contact_category": "Polar Atom Proximity (<3.4 A)"
+        "residue": "PHE183",
+        "min_dist_A": 3.26,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "LYS61",
+        "residue": "ARG134",
         "min_dist_A": 3.43,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
-        "residue": "PHE183",
-        "min_dist_A": 3.47,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "GLU69",
-        "min_dist_A": 3.48,
+        "residue": "CYS67",
+        "min_dist_A": 3.46,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
         "residue": "LEU132",
-        "min_dist_A": 3.53,
+        "min_dist_A": 3.46,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "ALA80",
+        "min_dist_A": 3.48,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "GLU140",
+        "min_dist_A": 3.49,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "LEU130",
+        "min_dist_A": 3.51,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "VAL114",
+        "min_dist_A": 3.69,
+        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
+      },
+      {
+        "residue": "HIS105",
+        "min_dist_A": 3.74,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       },
       {
         "residue": "GLY62",
-        "min_dist_A": 3.57,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "GLY180",
-        "min_dist_A": 3.58,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "GLY63",
-        "min_dist_A": 3.59,
-        "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
-      },
-      {
-        "residue": "ARG135",
-        "min_dist_A": 3.67,
+        "min_dist_A": 3.78,
         "contact_category": "Steric / Non-Polar Proximity (<3.8 A)"
       }
     ]

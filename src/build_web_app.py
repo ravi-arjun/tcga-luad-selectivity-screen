@@ -2,7 +2,8 @@ import os
 import json
 import math
 import pandas as pd
-from statsmodels.stats.multitest import multipletests
+
+PLACEHOLDER_NOTE = "not recorded; rerun the pipeline script that produces it"
 
 
 def pdbqt_to_pdb_block(pdbqt_path, first_model_only=True):
@@ -46,36 +47,102 @@ def build_static_site(out_dir="docs"):
     foldseek_df = pd.read_csv("results/LUAD_foldseek_offtargets.csv")
     foldseek_df = foldseek_df.where(pd.notnull(foldseek_df), None)
 
-    # Read exact survival summary dynamically from regenerated survival screen CSV
+    # ---- survival summary: every number below is read/derived from result files, never hardcoded ----
     surv_csv = "results/LUAD_all_survival_screen.csv"
-    n_tested = 0
-    n_nominal = 0
-    n_fdr_km = 0
-    if os.path.exists(surv_csv):
-        sdf = pd.read_csv(surv_csv)
-        n_tested = int(sdf["km_logrank_p"].notna().sum())
-        padj_col = sdf["km_logrank_padj"] if "km_logrank_padj" in sdf.columns else multipletests(sdf["km_logrank_p"].dropna(), method="fdr_bh")[1]
-        n_nominal = int(((sdf["km_logrank_p"] < 0.05) & (sdf["cox_HR"] > 1.0)).sum())
-        n_fdr_km = int(((padj_col < 0.10) & (sdf["cox_HR"] > 1.0)).sum())
+    sdf = pd.read_csv(surv_csv)
+    summ_path = "results/LUAD_survival_summary.json"
+    if os.path.exists(summ_path):
+        with open(summ_path) as f:
+            surv = json.load(f)
+    else:
+        surv = {}
+    n_tested = int(sdf["km_logrank_p"].notna().sum())
+    n_nom_all = int((sdf["km_logrank_p"] < 0.05).sum())
+    n_nom_hr = int(((sdf["km_logrank_p"] < 0.05) & (sdf["cox_HR"] > 1.0)).sum())
+    n_fdr_all = int((sdf["km_logrank_padj"] < 0.10).sum())
+    n_fdr_hr = int(((sdf["km_logrank_padj"] < 0.10) & (sdf["cox_HR"] > 1.0)).sum())
+    n_mv_fdr = int((sdf["cox_multivar_padj"] < 0.10).sum())
+    n_cohort = int(surv.get("n_km_cohort", sdf["n_km"].max()))
+    n_cox = int(sdf["n_cox_complete_case"].median())
+    filt_mode = surv.get("gene_filter_mode", "unknown")
+    if filt_mode == "protein-coding":
+        gene_phrase = "protein-coding genes"
+    elif filt_mode == "annotated-symbol-only":
+        gene_phrase = "annotated-symbol genes (gene biotype was not available, so protein-coding status was not verified)"
+    else:
+        gene_phrase = "upregulated genes (gene-biotype filtering status not recorded)"
+    if "cox_penalizer" not in surv or surv.get("cox_penalizer") != 0.0:
+        raise RuntimeError("Survival results were produced before the Cox penalizer fix; rerun survival_and_hubs.py.")
+
+    def _mv_q(sym):
+        r = sdf[sdf["symbol"] == sym]
+        return None if r.empty or pd.isna(r["cox_multivar_padj"].iloc[0]) else float(r["cox_multivar_padj"].iloc[0])
+
+    # Network degree / rank of the two selected kinases within the candidate subnetwork
+    net_csv = "results/LUAD_final_docking_targets.csv"
+    net_lbl = "Selected mitotic kinases (chosen a priori)"
+    if os.path.exists(net_csv):
+        ndf = pd.read_csv(net_csv).reset_index(drop=True)
+        parts = []
+        for g in ("NEK2", "PLK1"):
+            hit = ndf.index[ndf["symbol"] == g]
+            if len(hit):
+                parts.append(f"{g}: degree {int(ndf.loc[hit[0], 'network_degree'])}, rank {int(hit[0]) + 1}/{len(ndf)}")
+        if parts:
+            net_lbl = "Selected mitotic kinases (chosen a priori); STRING degree within candidate subnetwork &mdash; " + "; ".join(parts)
 
     # Compute exact top ATP-competitive dS_Vina candidate (excluding non-ATP-competitive Rigosertib)
-    atp_df = docking_df[docking_df["atp_competitive"] == True].copy() if "atp_competitive" in docking_df.columns else docking_df.copy()
+    if "best_scoring_comparator" not in docking_df.columns:
+        raise RuntimeError("Vina CSV uses the old 'closest_offtarget' schema; rerun vina_selectivity_screen.py "
+                           "(or recompute_selectivity_from_scores.py).")
+    atp_df = docking_df[docking_df["atp_competitive"] == True].copy()
     best_row = atp_df.sort_values("delta_S_vina").iloc[0]
     best_ds_str = f"{best_row['delta_S_vina']:+.2f} (&Delta;S<sub>Vina</sub>)"
-    best_ds_lbl = f"Top ATP-Pocket Margin ({best_row['ligand']} on {best_row['primary_target']})"
+    best_ds_lbl = (f"Largest Vina score difference vs. pocket-aligned comparators "
+                   f"({best_row['ligand']} on {best_row['primary_target']}; kcal/mol; all-comparator &Delta;S = {best_row['delta_S_vina_all_comparators']:+.2f}; unvalidated &mdash; within typical Vina error)")
 
     with open("results/LUAD_docking_pockets.json", "r") as f:
         pockets = json.load(f)
+
+    # Fail loudly if inputs are out of sync (stale bundle / KM cohort)
+    if os.path.getmtime("results/LUAD_web_dashboard_bundle.json") < os.path.getmtime(vina_csv):
+        raise RuntimeError("LUAD_web_dashboard_bundle.json is older than the Vina CSV; rerun selectivity_viz_and_contacts.py.")
+    _g = next(iter(km_data))
+    km_n = km_data[_g]["high"]["n"] + km_data[_g]["low"]["n"]
+    if km_n != n_cohort:
+        raise RuntimeError(f"KM curves use n={km_n} but the survival screen cohort is n={n_cohort}; rerun plot_km_curves.py.")
+
+    vina_version = pockets.get("vina_version", "version not recorded")
+    thr = pockets.get("max_comparator_pocket_rmsd_A", 3.0)
+
+    def _tlig(t):
+        code = pockets["targets"][t].get("holo_ligand_resname")
+        return f"PDB {pockets['targets'][t]['holo_pdb'].split('_')[-1].split('.')[0]}" + (f", co-crystal ligand {code}" if code else "")
+
+    n_analogs = {t: sum(1 for k in pockets["alignments"][t] if not k.endswith("_CTRL")) for t in pockets["alignments"]}
+    n_ctrls = {t: sum(1 for k in pockets["alignments"][t] if k.endswith("_CTRL")) for t in pockets["alignments"]}
+    analog_val = f"{n_analogs.get('NEK2', 0)} / {n_analogs.get('PLK1', 0)} Analogs"
+    analog_lbl = (f"Foldseek analogs docked (NEK2 / PLK1), each plus {n_ctrls.get('NEK2', 0)} clinical-target controls; "
+                  f"comparators with pocket RMSD &gt; {thr} &Aring; are reported but excluded from &Delta;S")
 
     redock = pockets.get("positive_control_redocking", {})
     redock_rmsd = redock.get("heavy_atom_rmsd_A", "N/A")
     redock_score = redock.get("vina_score", "N/A")
     redock_passed = redock.get("passed", False)
+    _n = f"{redock.get('matched_heavy_atoms', '?')}/{redock.get('ligand_heavy_atoms', '?')} heavy atoms matched"
     redock_summary = (
-        f"PASSED ({redock_rmsd} &Aring; &le; 2.00 &Aring;)"
+        f"PASSED ({redock_rmsd} &Aring; &le; 2.00 &Aring;; Vina score {redock_score}; {_n})"
         if redock_passed
-        else f"Did not pass ({redock_rmsd} &Aring; &gt; 2.00 &Aring;; score {redock_score}) &mdash; flexible tail shift in rigid receptor"
+        else f"Did not pass ({redock_rmsd} &Aring; &gt; 2.00 &Aring;; Vina score {redock_score}; {_n})"
     )
+    redock_diag = redock.get("diagnosis", "Failure cause not diagnosed (rerun vina_selectivity_screen.py for the ring / non-ring RMSD breakdown).")
+    redock_concl = (
+        "Pose recovery met the 2.00 &Aring; benchmark, but Vina scores remain hypothesis-generating rankings rather than validated binding affinities (&Delta;G)."
+        if redock_passed else
+        "Because pose recovery did not meet the 2.00 &Aring; benchmark, all Vina scores are interpreted strictly as hypothesis-generating rankings rather than validated binding affinities (&Delta;G)."
+    )
+    _q_n, _q_p = _mv_q("NEK2"), _mv_q("PLK1")
+    _fmt = lambda q: "n/a" if q is None else f"{q:.2f}"
 
     structures_3d = {
         "NEK2_receptor": pdbqt_to_pdb_block("docking/receptors/NEK2_primary.pdbqt"),
@@ -258,9 +325,9 @@ def build_static_site(out_dir="docs"):
         <strong>Foldseek</strong> 3D structural analog search with local ATP-pocket superposition, and multi-seed <strong>AutoDock Vina (&Delta;S<sub>Vina</sub>)</strong> counter-screening.
       </p>
       <div class="metrics-grid">
-        <div class="metric-card"><div class="metric-val">{n_fdr_km} FDR / {n_nominal} Nom.</div><div class="metric-lbl">Exploratory Survival Candidates (of {n_tested:,} Upregulated Genes; KM BH q &lt; 0.10)</div></div>
-        <div class="metric-card"><div class="metric-val">NEK2 &amp; PLK1</div><div class="metric-lbl">Network-Prioritized Mitotic Kinase Candidates</div></div>
-        <div class="metric-card"><div class="metric-val">5 Analogs + Controls</div><div class="metric-lbl">ATP-Pocket Aligned Structural Analogs &amp; Clinical Target Comparators</div></div>
+        <div class="metric-card"><div class="metric-val">{n_fdr_hr} FDR / {n_nom_all} Nom.</div><div class="metric-lbl">Exploratory survival associations among {n_tested:,} upregulated genes (FDR: KM BH q &lt; 0.10 and HR &gt; 1; Nom.: KM p &lt; 0.05, either direction)</div></div>
+        <div class="metric-card"><div class="metric-val">NEK2 &amp; PLK1</div><div class="metric-lbl">{net_lbl}</div></div>
+        <div class="metric-card"><div class="metric-val">{analog_val}</div><div class="metric-lbl">{analog_lbl}</div></div>
         <div class="metric-card"><div class="metric-val">{best_ds_str}</div><div class="metric-lbl">{best_ds_lbl}</div></div>
       </div>
     </div>
@@ -268,12 +335,12 @@ def build_static_site(out_dir="docs"):
 
   <main class="container section">
     <div class="card">
-      <h2>1. Interactive 3D ATP-Pocket Docking &amp; Off-Target Counter-Screen Viewer (AutoDock Vina 1.2.7)</h2>
+      <h2>1. Interactive 3D ATP-Pocket Docking &amp; Off-Target Counter-Screen Viewer (AutoDock Vina {vina_version})</h2>
       <div class="controls">
         <label>Primary Target:
           <select id="targetSelect">
-            <option value="NEK2">NEK2 (PDB: 2W5B, ATP&gamma;S-bound)</option>
-            <option value="PLK1">PLK1 (PDB: 2OWB, PHA-680626-bound)</option>
+            <option value="NEK2">NEK2 ({_tlig("NEK2")})</option>
+            <option value="PLK1">PLK1 ({_tlig("PLK1")})</option>
           </select>
         </label>
         <label>Cross-Screened Ligand:
@@ -306,7 +373,7 @@ def build_static_site(out_dir="docs"):
         <div id="selectivityPlot" style="height: 390px;"></div>
       </div>
       <div class="card">
-        <h2>3. TCGA-LUAD Overall Survival (Exploratory Median-Split Kaplan–Meier)</h2>
+        <h2>3. TCGA-LUAD Overall Survival (Exploratory Median-Split Kaplan–Meier, n = {n_cohort})</h2>
         <div class="controls" id="kmGeneButtons"></div>
         <div id="kmPlot" style="height: 345px;"></div>
       </div>
@@ -323,9 +390,10 @@ def build_static_site(out_dir="docs"):
               <th>Ligand</th>
               <th>Mechanism / Clinical Status</th>
               <th>S<sub>primary</sub> (Vina)</th>
-              <th>Closest Comparator</th>
+              <th>Best-Scoring Comparator</th>
               <th>S<sub>comp</sub> (Vina)</th>
-              <th>&Delta;S<sub>Vina</sub></th>
+              <th>&Delta;S<sub>Vina</sub> (aligned comparators)</th>
+              <th>&Delta;S<sub>Vina</sub> (all comparators)</th>
               <th>MW</th>
               <th>cLogP</th>
               <th>TPSA (&Aring;&sup2;)</th>
@@ -339,9 +407,10 @@ def build_static_site(out_dir="docs"):
     <div class="card">
       <h2>5. Methodological Scope, Controls &amp; Scientific Limitations (v1.2)</h2>
       <ul style="color: #cbd5e1; font-size: 0.9rem; margin: 0; padding-left: 1.25rem;">
-        <li><strong>Exploratory Transcriptomic &amp; Survival Screen:</strong> Across {n_tested:,} strongly upregulated protein-coding genes (log<sub>2</sub>FC &gt; 1.5, DESeq2 FDR &lt; 0.01), median-split Kaplan–Meier log-rank testing identified {n_nominal} nominal associations (p &lt; 0.05) and {n_fdr_km} candidates at Benjamini–Hochberg FDR q &lt; 0.10 (HR &gt; 1.0), alongside complete-case multivariable Cox regression adjusted for age, sex, and pathological stage. These represent exploratory survival associations rather than validated clinical biomarkers.</li>
-        <li><strong>STRING v12 Functional Association Network:</strong> Network degree and betweenness centrality quantify functional connectivity (combined confidence score &ge; 0.70, encompassing physical and pathway associations) rather than direct physical binding strength or standalone therapeutic druggability.</li>
-        <li><strong>Positive Control Redocking Audit (PLK1 2RKU + (7R)-BI-2536):</strong> Co-crystal redocking with stereochemically verified (7R)-BI-2536 yielded a symmetry-aware heavy-atom RMSD of <strong>{redock_summary}</strong>. Because this exceeds the standard 2.00 &Aring; pose-recovery benchmark due to flexible tail movement in a rigid receptor, all Vina scores are interpreted strictly as hypothesis-generating rankings rather than validated binding affinities (&Delta;G).</li>
+        <li><strong>Exploratory Transcriptomic &amp; Survival Screen:</strong> Across {n_tested:,} strongly upregulated {gene_phrase} (log<sub>2</sub>FC &gt; 1.5, DESeq2 FDR &lt; 0.01; cohort n = {n_cohort}), median-split Kaplan–Meier log-rank testing gave {n_nom_all} nominal associations (p &lt; 0.05, either direction; {n_nom_hr} with HR &gt; 1) and {n_fdr_all} at Benjamini–Hochberg FDR q &lt; 0.10 ({n_fdr_hr} with HR &gt; 1, the candidate set). Complete-case multivariable Cox regression (age, sex, pathological stage; median n = {n_cox}; unpenalized) was also run: only {n_mv_fdr} of {n_tested:,} genes have multivariable FDR q &lt; 0.10 (NEK2 q = {_fmt(_q_n)}, PLK1 q = {_fmt(_q_p)}). These are exploratory survival associations, not validated clinical biomarkers. The differential-expression model treats all tumor and normal samples as independent, including patients contributing both.</li>
+        <li><strong>STRING v12 Functional Association Network:</strong> Network degree (number of STRING links to other genes in the candidate set; combined confidence score &ge; 0.70, encompassing physical and functional associations) quantifies connectivity within the candidate subnetwork only, not the whole STRING network, and is not direct physical binding strength or druggability. Betweenness centrality was not computed.</li>
+        <li><strong>Positive Control Redocking Audit (PLK1 2RKU + (7R)-BI-2536):</strong> Co-crystal redocking with stereochemically verified (7R)-BI-2536 yielded a symmetry-aware heavy-atom RMSD of <strong>{redock_summary}</strong>. {redock_diag} {redock_concl}</li>
+        <li><strong>&Delta;S<sub>Vina</sub> definition:</strong> S<sub>primary</sub> minus the best (most negative) Vina score among pocket-aligned comparators (ATP-pocket C&alpha; RMSD &le; {thr} &Aring; to the primary target); other comparators (including the clinical-target controls when poorly aligned) are docked and reported but excluded, so the table also shows &Delta;S against all comparators; the two can differ in sign. Margins of a few tenths of a kcal/mol are within typical Vina scoring error (seed SD reflects search noise only), so rankings are not evidence of selectivity.</li>
         <li><strong>Mechanism-Aware Comparator Separation:</strong> <strong>Rigosertib</strong> is flagged as a non-ATP-competitive modulator and excluded from the ATP-pocket selectivity ranking (displayed separately as an external comparator).</li>
       </ul>
     </div>
@@ -430,7 +499,7 @@ def build_static_site(out_dir="docs"):
           </p>
           <p style="margin:0.35rem 0 0; font-size:0.86rem; color:#cbd5e1;">
             Primary Vina Score: <strong>${{row.score_primary_vina.toFixed(2)}}</strong> &bull;
-            Closest Comparator (${{row.closest_offtarget}}): <strong>${{row.score_closest_offtarget_vina.toFixed(2)}}</strong><br/>
+            Best-Scoring Comparator (${{row.best_scoring_comparator}}): <strong>${{row.score_best_comparator_vina.toFixed(2)}}</strong><br/>
             MW: ${{row.MW}} Da &bull; cLogP: ${{row.cLogP}} &bull; TPSA: ${{row.TPSA}} &Aring;&sup2;
           </p>
         </div>
@@ -542,9 +611,10 @@ def build_static_site(out_dir="docs"):
             <td><strong>${{r.ligand}}</strong></td>
             <td style="color:#94a3b8;">${{r.established_target}} &bull; ${{r.clinical_status}}</td>
             <td>${{r.score_primary_vina.toFixed(2)}}</td>
-            <td>${{r.closest_offtarget}}</td>
-            <td>${{r.score_closest_offtarget_vina.toFixed(2)}}</td>
+            <td>${{r.best_scoring_comparator}}</td>
+            <td>${{r.score_best_comparator_vina.toFixed(2)}}</td>
             <td><span class="${{pillClass}}">${{r.delta_S_vina > 0 ? '+' : ''}}${{r.delta_S_vina.toFixed(2)}}</span></td>
+            <td>${{r.delta_S_vina_all_comparators > 0 ? '+' : ''}}${{r.delta_S_vina_all_comparators.toFixed(2)}}</td>
             <td>${{r.MW}}</td>
             <td>${{r.cLogP}}</td>
             <td>${{r.TPSA}}</td>

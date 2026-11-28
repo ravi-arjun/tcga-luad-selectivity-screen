@@ -1,5 +1,7 @@
 import os
+import re
 import glob
+import json
 import pickle
 import requests
 import numpy as np
@@ -51,21 +53,28 @@ def load_clean_clinical(clin_pattern="**/clinical*.tsv"):
     stage_col = "diagnoses.ajcc_pathologic_stage" if "diagnoses.ajcc_pathologic_stage" in raw_clin.columns else "ajcc_pathologic_stage"
     stage_raw = raw_clin[stage_col]
     def encode_stage(val):
+        """Stage I/II -> 0, Stage III/IV -> 1, anything else (incl. 'Stage X', 'Not Reported') -> NaN."""
         if pd.isna(val):
             return np.nan
-        s = str(val).strip().upper()
-        if any(tok in s for tok in ["STAGE III", "STAGE IV", "III", "IV"]):
-            return 1.0
-        if any(tok in s for tok in ["STAGE I", "STAGE II", "I", "II"]):
-            return 0.0
-        return np.nan
+        m = re.match(r"^\s*STAGE\s+(IV|III|II|I)(?:[ABC]\d?)?\s*$", str(val).strip().upper())
+        if not m:
+            return np.nan
+        return 1.0 if m.group(1) in ("III", "IV") else 0.0
 
     clin["advanced_stage"] = stage_raw.apply(encode_stage)
     return clin
 
 
+def is_annotated_symbol(sym):
+    """True for real gene symbols; False for NaN or the Ensembl-ID placeholder written by annotate_genes()."""
+    return pd.notna(sym) and not str(sym).startswith("ENSG")
+
+
 def query_string_hubs(gene_symbols, species=9606, score_threshold=700, out_csv="results/LUAD_ppi_hubs.csv"):
-    """Query STRING v12 functional association network (combined score >= 0.70) and compute degree centrality."""
+    """
+    Query STRING v12 functional association network (combined score >= 0.70) and compute DEGREE within the
+    submitted gene set only (i.e. the candidate subnetwork, not the whole STRING network). Betweenness is NOT computed.
+    """
     genes = [str(g).strip() for g in gene_symbols if pd.notna(g) and str(g).strip()]
     if len(genes) < 2:
         return pd.DataFrame()
@@ -123,7 +132,10 @@ def run_survival_screen(
     de_df["ensembl_id"] = de_df.index.astype(str).str.split(".").str[0]
 
     # Explicit Primary Tumor filter (-01) and deterministic vial selection (-01A before -01B)
-    tumor_meta = tumor_meta[tumor_meta["tcga_id"].astype(str).str.contains("-01", na=False)].copy()
+    # Sample-type code is the first two characters of the 4th barcode field (01 = Primary Solid Tumor).
+    # (A substring test for "-01" would wrongly match patient barcodes such as TCGA-xx-01xx-11A.)
+    sample_code = tumor_meta["tcga_id"].astype(str).str.split("-").str[3].str[:2]
+    tumor_meta = tumor_meta[(sample_code == "01") & (tumor_meta["condition"] == "tumor")].copy()
     tumor_meta["patient_id"] = tumor_meta["tcga_id"].astype(str).str[:12]
     tumor_meta = tumor_meta.sort_values(["patient_id", "tcga_id", "sample_id"]).drop_duplicates(subset=["patient_id"], keep="first")
     patient_to_sample = dict(zip(tumor_meta["patient_id"], tumor_meta["sample_id"]))
@@ -133,12 +145,24 @@ def run_survival_screen(
     clin = clin.dropna(subset=["sample_id"]).copy()
 
     up_genes = de_df[(de_df["log2FoldChange"] > 1.5) & (de_df["padj"] < 0.01)].copy()
+    n_upregulated_total = int(len(up_genes))
+
+    # Restrict to protein-coding genes when biotype is available; otherwise fall back to annotated symbols only
+    # and record that the protein-coding claim could NOT be made.
+    if "gene_type" in up_genes.columns and up_genes["gene_type"].notna().any():
+        up_genes = up_genes[up_genes["gene_type"] == "protein-coding"].copy()
+        gene_filter_mode = "protein-coding"
+    else:
+        gene_filter_mode = "annotated-symbol-only"
+    up_genes = up_genes[up_genes["symbol"].apply(is_annotated_symbol)].copy()
+    n_upregulated_eligible = int(len(up_genes))
     records = []
+    cohort_samples = set()
 
     for _, row in up_genes.iterrows():
         ens = row["ensembl_id"]
         sym = row["symbol"]
-        if pd.isna(sym) or ens not in expr_log.index:
+        if ens not in expr_log.index:
             continue
 
         df_g = clin.copy()
@@ -147,6 +171,7 @@ def run_survival_screen(
         df_g = df_g[df_g["time"] > 0]
         if len(df_g) < 40:
             continue
+        cohort_samples.update(df_g["sample_id"])
 
         # 1. Exploratory median-split Kaplan-Meier log-rank test
         med = df_g["expr"].median()
@@ -173,7 +198,7 @@ def run_survival_screen(
                 df_g.loc[cox_mv.index, "expr"] - df_g.loc[cox_mv.index, "expr"].mean()
             ) / df_g.loc[cox_mv.index, "expr"].std()
             try:
-                cph = CoxPHFitter(penalizer=0.1)
+                cph = CoxPHFitter(penalizer=0.0)  # unpenalized so HR / Wald p-values are valid
                 cph.fit(cox_mv, duration_col="time", event_col="event")
                 cox_hr = float(np.exp(cph.params_["expr_z"]))
                 cox_mv_p = float(cph.summary.loc["expr_z", "p"])
@@ -188,7 +213,7 @@ def run_survival_screen(
             model_used = "univariate_fallback"
             cox_uv = df_g[["time", "event"]].copy()
             cox_uv["expr_z"] = (df_g["expr"] - df_g["expr"].mean()) / df_g["expr"].std()
-            cph_u = CoxPHFitter(penalizer=0.1)
+            cph_u = CoxPHFitter(penalizer=0.0)
             cph_u.fit(cox_uv, duration_col="time", event_col="event")
             cox_hr = float(np.exp(cph_u.params_["expr_z"]))
             cox_uv_p = float(cph_u.summary.loc["expr_z", "p"])
@@ -234,10 +259,38 @@ def run_survival_screen(
     cand_df.to_csv(out_cand_csv, index=False)
 
     nom_count = int((res_df["km_logrank_p"] < 0.05).sum())
+    nom_hr_gt1 = int(((res_df["km_logrank_p"] < 0.05) & (res_df["cox_HR"] > 1.0)).sum())
+    fdr_any = int((res_df["km_logrank_padj"] < 0.10).sum())
     mv_sig_count = int((res_df["cox_multivar_p"] < 0.05).sum())
-    print(f"Tested {len(res_df)} upregulated protein-coding genes (valid KM p-values: {int(valid_km.sum())})")
-    print(f"Nominal KM p < 0.05: {nom_count} | Exploratory KM FDR q < 0.10 (HR > 1.0): {len(cand_df)}")
-    print(f"Multivariable Cox p < 0.05 (complete-case adjusted): {mv_sig_count}")
+    mv_fdr_count = int((res_df["cox_multivar_padj"] < 0.10).sum())
+
+    # Persist the exact analysis cohort so figures (KM curves) use the SAME patients/samples as the screen
+    cohort = clin[clin["sample_id"].isin(cohort_samples)].copy()
+    cohort.to_csv("results/LUAD_survival_cohort.csv", index=False)
+
+    summary = {
+        "gene_filter_mode": gene_filter_mode,
+        "n_upregulated_total": n_upregulated_total,
+        "n_upregulated_eligible": n_upregulated_eligible,
+        "n_tested": int(len(res_df)),
+        "n_valid_km": int(valid_km.sum()),
+        "n_km_cohort": int(len(cohort)),
+        "n_cox_complete_case_median": int(res_df["n_cox_complete_case"].median()) if len(res_df) else 0,
+        "n_nominal_km_p_lt_0_05_any_direction": nom_count,
+        "n_nominal_km_p_lt_0_05_hr_gt_1": nom_hr_gt1,
+        "n_km_fdr_lt_0_10_any_direction": fdr_any,
+        "n_km_fdr_lt_0_10_hr_gt_1": int(len(cand_df)),
+        "n_multivar_cox_p_lt_0_05": mv_sig_count,
+        "n_multivar_cox_fdr_lt_0_10": mv_fdr_count,
+        "cox_penalizer": 0.0,
+    }
+    with open("results/LUAD_survival_summary.json", "w") as jf:
+        json.dump(summary, jf, indent=2)
+
+    print(f"Gene filter: {gene_filter_mode} | upregulated total {n_upregulated_total}, eligible {n_upregulated_eligible}")
+    print(f"Tested {len(res_df)} genes (valid KM p-values: {int(valid_km.sum())}); KM cohort n = {len(cohort)}")
+    print(f"Nominal KM p < 0.05: {nom_count} (HR > 1: {nom_hr_gt1}) | KM FDR q < 0.10: {fdr_any} (HR > 1: {len(cand_df)})")
+    print(f"Multivariable Cox p < 0.05: {mv_sig_count} | multivariable Cox FDR q < 0.10: {mv_fdr_count}")
     return res_df, cand_df
 
 

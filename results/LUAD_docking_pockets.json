@@ -1,8 +1,11 @@
 {
+  "vina_version": "1.2.7",
+  "max_comparator_pocket_rmsd_A": 3.0,
   "targets": {
     "NEK2": {
       "holo_pdb": "structures/targets/NEK2_2W5B.pdb",
       "pdb_description": "PDB 2W5B: Human NEK2 kinase bound to ATPgammaS",
+      "holo_ligand_resname": "AGS",
       "grid_center": [
         26.506,
         12.869,
@@ -21,6 +24,7 @@
     "PLK1": {
       "holo_pdb": "structures/targets/PLK1_2OWB.pdb",
       "pdb_description": "PDB 2OWB: Human PLK1 kinase bound to PHA-680626",
+      "holo_ligand_resname": "626",
       "grid_center": [
         -0.14,
         24.376,
@@ -149,9 +153,13 @@
     "seed_sd": 0.176,
     "heavy_atom_rmsd_A": 5.556,
     "matched_heavy_atoms": 35,
+    "ligand_heavy_atoms": 38,
+    "ring_atom_rmsd_A": 5.391,
+    "nonring_atom_rmsd_A": 6.007,
+    "diagnosis": "Ring atoms were also not recovered (5.391 A); failure is not confined to flexible substituents (cause not diagnosed).",
     "acceptance_threshold_A": 2.0,
     "passed": false,
-    "status_label": "FAILED (> 2.0 A; rigid-receptor limitation)",
+    "status_label": "FAILED (> 2.0 A)",
     "pose_file": "docking/poses/CONTROL_PLK1_2RKU_BI2536_redock.pdbqt"
   }
 }
